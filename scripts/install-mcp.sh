@@ -132,6 +132,17 @@ get_binary_path() {
         print_success "Using pre-built binary: $binary_path"
     fi
 
+
+    # Create config.json next to the binary
+    local config_file="$(dirname "$binary_path")/config.json"
+    cat > "$config_file" <<CONFIG_EOF
+{
+  "api_key": "$API_KEY",
+  "budget_key": "$BUDGET_KEY",
+  "api_url": "${API_URL:-https://api.agentpmt.com}"
+}
+CONFIG_EOF
+    print_success "Created config.json at: $config_file"
     echo "$binary_path"
 }
 
@@ -313,19 +324,14 @@ configure_claude_desktop() {
         existing_config=$(cat "$config_file")
     fi
 
-    # Add or update agent-payment server configuration
+    # Add or update agent-payment server configuration (no env vars - uses config.json)
     local new_config=$(echo "$existing_config" | python3 -c "
 import sys, json
 config = json.load(sys.stdin)
 if 'mcpServers' not in config:
     config['mcpServers'] = {}
 config['mcpServers']['agent-payment'] = {
-    'command': '$BINARY_PATH',
-    'env': {
-        'API_KEY': '$API_KEY',
-        'BUDGET_KEY': '$BUDGET_KEY',
-        'API_URL': '${API_URL:-https://api.agentpmt.com}'
-    }
+    'command': '$BINARY_PATH'
 }
 print(json.dumps(config, indent=2))
 ")
@@ -333,6 +339,7 @@ print(json.dumps(config, indent=2))
     echo "$new_config" > "$config_file"
     print_success "Configured Claude Desktop"
     print_info "Config file: $config_file"
+    print_info "Credentials stored in: $(dirname "$BINARY_PATH")/config.json"
     CONFIGURED_TOOLS+=("claude-desktop")
 }
 
@@ -361,11 +368,7 @@ config = json.load(sys.stdin)
 if 'mcpServers' not in config:
     config['mcpServers'] = {}
 config['mcpServers']['agent-payment'] = {
-    'command': '$BINARY_PATH',
-    'env': {
-        'API_KEY': '$API_KEY',
-        'BUDGET_KEY': '$BUDGET_KEY',
-        'API_URL': '${API_URL:-https://api.agentpmt.com}'
+    'command': '$BINARY_PATH'
     }
 }
 print(json.dumps(config, indent=2))
@@ -406,11 +409,7 @@ config = json.load(sys.stdin)
 if 'mcpServers' not in config:
     config['mcpServers'] = {}
 config['mcpServers']['agent-payment'] = {
-    'command': '$BINARY_PATH',
-    'env': {
-        'API_KEY': '$API_KEY',
-        'BUDGET_KEY': '$BUDGET_KEY',
-        'API_URL': '${API_URL:-https://api.agentpmt.com}'
+    'command': '$BINARY_PATH'
     }
 }
 print(json.dumps(config, indent=2))
@@ -451,11 +450,7 @@ config = json.load(sys.stdin)
 if 'mcpServers' not in config:
     config['mcpServers'] = {}
 config['mcpServers']['agent-payment'] = {
-    'command': '$BINARY_PATH',
-    'env': {
-        'API_KEY': '$API_KEY',
-        'BUDGET_KEY': '$BUDGET_KEY',
-        'API_URL': '${API_URL:-https://api.agentpmt.com}'
+    'command': '$BINARY_PATH'
     }
 }
 print(json.dumps(config, indent=2))
@@ -507,12 +502,7 @@ config = json.load(sys.stdin)
 if 'servers' not in config:
     config['servers'] = {}
 config['servers']['agent-payment'] = {
-    'type': 'stdio',
-    'command': '$BINARY_PATH',
-    'env': {
-        'API_KEY': '$API_KEY',
-        'BUDGET_KEY': '$BUDGET_KEY',
-        'API_URL': '${API_URL:-https://api.agentpmt.com}'
+    'command': '$BINARY_PATH'
     }
 }
 print(json.dumps(config, indent=2))
@@ -553,12 +543,7 @@ config = json.load(sys.stdin)
 if 'context_servers' not in config:
     config['context_servers'] = {}
 config['context_servers']['agent-payment'] = {
-    'source': 'custom',
-    'command': '$BINARY_PATH',
-    'env': {
-        'API_KEY': '$API_KEY',
-        'BUDGET_KEY': '$BUDGET_KEY',
-        'API_URL': '${API_URL:-https://api.agentpmt.com}'
+    'command': '$BINARY_PATH'
     }
 }
 print(json.dumps(config, indent=2))
@@ -583,9 +568,7 @@ configure_jetbrains() {
     echo "     - Name: agent-payment"
     echo "     - Command: $BINARY_PATH"
     echo "     - Environment Variables:"
-    echo "       API_KEY=$API_KEY"
-    echo "       BUDGET_KEY=$BUDGET_KEY"
-    echo "       API_URL=${API_URL:-https://api.agentpmt.com}"
+    echo "     No environment variables needed - uses config.json"
     echo "  5. Click Apply and OK"
 
     CONFIGURED_TOOLS+=("jetbrains-manual")
