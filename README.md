@@ -1,6 +1,10 @@
 # Agent Payment MCP
 
-Access AI-powered tools from Agent Payment API in Claude Desktop, Cursor, and VS Code.
+Access AI-powered tools from Agent Payment API in Claude Desktop, Cursor, VS Code, Zed, IntelliJ IDEA, Windsurf, and more.
+
+## 🤖 For AI Agents
+
+If you're an AI agent helping a user install this MCP server, please read **[AGENTS.md](AGENTS.md)** for structured installation instructions. It contains step-by-step guidance for automated setup.
 
 ## Overview
 
@@ -8,11 +12,37 @@ Agent Payment MCP provides a seamless way to integrate premium AI tools into you
 
 - **PWA (Progressive Web App)** - Web interface to browse tools and generate installers
 - **Go MCP Server** - Lightweight standalone server (6-8MB) that proxies tools to desktop clients
-- **Installation Scripts** - Automated setup for Claude Desktop, Cursor, and VS Code
+- **Universal Installer** - Automated setup for 8+ AI tools including Claude Desktop, Cursor, VS Code, Zed, JetBrains IDEs, Windsurf, and more
 
 ## Quick Start
 
-### For End Users
+### Automated Installation (Recommended)
+
+1. **Clone this repository:**
+   ```bash
+   git clone https://github.com/Apoth3osis-ai/agent-payment-mcp
+   cd agent-payment-mcp
+   ```
+
+2. **Configure API credentials:**
+   ```bash
+   cp .env.example .env
+   # Edit .env and add your actual API_KEY and BUDGET_KEY from https://agentpmt.com
+   ```
+
+3. **Run universal installer:**
+   ```bash
+   ./scripts/install-mcp.sh
+   ```
+
+   This script automatically:
+   - Detects installed AI tools (Claude Desktop, Cursor, VS Code, Zed, etc.)
+   - Configures MCP server for each detected tool
+   - Sets up the Go binary with your credentials
+
+4. **Restart your AI tools** and verify the MCP server appears
+
+### Manual Installation via PWA
 
 1. **Get API Credentials**
    - Visit [agentpmt.com](https://agentpmt.com) to get your API and budget keys
@@ -25,8 +55,12 @@ Agent Payment MCP provides a seamless way to integrate premium AI tools into you
 
 3. **Install & Use**
    - Run the downloaded installer
-   - Restart your desktop client (Claude/Cursor/VS Code)
+   - Restart your desktop client
    - Tools will appear in your MCP tools list
+
+### For AI Agents
+
+If you're an AI coding assistant helping with installation, see **[AGENTS.md](AGENTS.md)** for detailed agent-friendly instructions.
 
 ### For Developers
 
@@ -205,8 +239,24 @@ The server reads `config.json`:
 }
 ```
 
+## Supported AI Tools
+
+This MCP server works with the following AI coding assistants:
+
+- **Claude Desktop** - Full native MCP support
+- **Claude Code CLI** - Command-line interface with MCP
+- **Cursor** - VS Code fork with AI capabilities
+- **Windsurf** - Codeium-powered IDE
+- **VS Code** - With GitHub Copilot extension
+- **Zed** - Modern code editor with AI
+- **IntelliJ IDEA / JetBrains IDEs** (2025.1+) - Built-in MCP client
+- **Sourcegraph Cody** - Code intelligence with MCP via OpenCtx
+
+The universal installer automatically detects and configures all installed tools.
+
 ## Documentation
 
+- **[AGENTS.md](AGENTS.md)** - AI agent installation guide (for automated setup)
 - **[PWA Documentation](pwa/README.md)** - PWA development guide
 - **[MCP Server Documentation](mcp-server/README.md)** - Server implementation details
 - **[Contributing Guide](CONTRIBUTING.md)** - How to contribute
