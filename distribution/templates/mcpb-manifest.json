@@ -1,0 +1,24 @@
+{
+  "manifest_version": "0.2",
+  "name": "agent-payment",
+  "display_name": "Agent Payment",
+  "version": "1.0.0",
+  "description": "MCP tools from Agent Payment API - access AI-powered tools for your workflows",
+  "author": {
+    "name": "Agent Payment",
+    "url": "https://agentpmt.com"
+  },
+  "icon": "agent-payment-logo.png",
+  "server": {
+    "type": "binary",
+    "entry_point": "agent-payment-server",
+    "mcp_config": {
+      "command": "${__dirname}/agent-payment-server",
+      "args": []
+    }
+  },
+  "keywords": ["ai", "tools", "api", "automation"],
+  "license": "MIT",
+  "homepage": "https://agentpmt.com",
+  "documentation": "https://docs.agentpmt.com"
+}

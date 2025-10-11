@@ -1,0 +1,3 @@
+- We want the ability to easily change to test endpoint, will require another parameter of admin key as well
+- Send us user error logging directly
+- Change to call us intermitenently or upon trigger to check for updates and initiate if available
