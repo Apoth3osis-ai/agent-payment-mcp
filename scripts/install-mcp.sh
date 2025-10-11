@@ -348,6 +348,7 @@ configure_claude_code() {
     print_info "Configuring Claude Code CLI..."
 
     local config_file="$HOME/.claude.json"
+    local current_dir="$(pwd)"
 
     # Backup existing config
     if [ -f "$config_file" ]; then
@@ -361,22 +362,36 @@ configure_claude_code() {
         existing_config=$(cat "$config_file")
     fi
 
-    # Add or update agent-payment server configuration
+    # Add or update agent-payment server configuration (per-project config)
     local new_config=$(echo "$existing_config" | python3 -c "
-import sys, json
+import sys, json, os
 config = json.load(sys.stdin)
-if 'mcpServers' not in config:
-    config['mcpServers'] = {}
-config['mcpServers']['agent-payment'] = {
+project_dir = os.getcwd()
+
+# Ensure projects section exists
+if 'projects' not in config:
+    config['projects'] = {}
+
+# Ensure current project exists
+if project_dir not in config['projects']:
+    config['projects'][project_dir] = {}
+
+# Ensure mcpServers exists for this project
+if 'mcpServers' not in config['projects'][project_dir]:
+    config['projects'][project_dir]['mcpServers'] = {}
+
+# Add agent-payment server
+config['projects'][project_dir]['mcpServers']['agent-payment'] = {
     'command': '$BINARY_PATH'
-    }
 }
+
 print(json.dumps(config, indent=2))
 ")
 
     echo "$new_config" > "$config_file"
     print_success "Configured Claude Code CLI"
     print_info "Config file: $config_file"
+    print_info "Project: $current_dir"
     CONFIGURED_TOOLS+=("claude-code")
 }
 
