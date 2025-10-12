@@ -26,34 +26,53 @@ function renderTools() {
         const label = document.createElement('label');
         label.className = 'tool-checkbox';
 
+        // Only Claude Desktop is available, others are coming soon
+        const isComingSoon = tool.id !== 'claude-desktop';
+        if (isComingSoon) {
+            label.style.opacity = '0.5';
+            label.style.cursor = 'not-allowed';
+        }
+
         const checkbox = document.createElement('input');
         checkbox.type = 'checkbox';
         checkbox.dataset.toolId = tool.id;
-        checkbox.addEventListener('change', (e) => {
-            if (e.target.checked) {
-                if (!selectedTools.includes(tool.id)) {
-                    selectedTools.push(tool.id);
+        checkbox.disabled = isComingSoon;
+
+        if (!isComingSoon) {
+            checkbox.addEventListener('change', (e) => {
+                if (e.target.checked) {
+                    if (!selectedTools.includes(tool.id)) {
+                        selectedTools.push(tool.id);
+                    }
+                } else {
+                    selectedTools = selectedTools.filter(id => id !== tool.id);
                 }
-            } else {
-                selectedTools = selectedTools.filter(id => id !== tool.id);
-            }
-        });
+            });
+        }
 
         const nameSpan = document.createElement('span');
         nameSpan.className = 'tool-name';
         nameSpan.textContent = tool.name;
 
-        if (tool.detected) {
+        if (tool.detected && !isComingSoon) {
             const badge = document.createElement('span');
             badge.className = 'detected-badge';
             badge.textContent = '✓ Detected';
             nameSpan.appendChild(badge);
         }
 
+        if (isComingSoon) {
+            const badge = document.createElement('span');
+            badge.className = 'detected-badge';
+            badge.style.background = '#6c757d';
+            badge.textContent = 'Coming Soon';
+            nameSpan.appendChild(badge);
+        }
+
         label.appendChild(checkbox);
         label.appendChild(nameSpan);
 
-        if (tool.configPath && tool.configPath !== 'GUI Configuration Required') {
+        if (tool.configPath && tool.configPath !== 'GUI Configuration Required' && !isComingSoon) {
             const pathSpan = document.createElement('span');
             pathSpan.className = 'config-path';
             pathSpan.textContent = tool.configPath;
