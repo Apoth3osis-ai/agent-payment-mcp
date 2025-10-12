@@ -1,0 +1,390 @@
+package installer
+
+import (
+	"encoding/json"
+	"fmt"
+	"os"
+	"path/filepath"
+	"runtime"
+)
+
+const (
+	installDir = ".agent-payment"
+	binaryName = "agent-payment-server"
+)
+
+type InstallRequest struct {
+	APIKey        string   `json:"apiKey"`
+	BudgetKey     string   `json:"budgetKey"`
+	Environment   string   `json:"environment"` // "live" or "test"
+	SelectedTools []string `json:"selectedTools"`
+}
+
+type InstallProgress struct {
+	Step     string `json:"step"`
+	Message  string `json:"message"`
+	Progress int    `json:"progress"` // 0-100
+	Error    string `json:"error,omitempty"`
+}
+
+type Installer struct{}
+
+func New() *Installer {
+	return &Installer{}
+}
+
+func (inst *Installer) Install(req InstallRequest) InstallProgress {
+	// Validate
+	if req.APIKey == "" {
+		return InstallProgress{Error: "API Key is required"}
+	}
+	if req.BudgetKey == "" {
+		return InstallProgress{Error: "Budget Key is required"}
+	}
+	if len(req.SelectedTools) == 0 {
+		return InstallProgress{Error: "Please select at least one AI tool"}
+	}
+
+	// Step 1: Copy/download binary
+	progress := InstallProgress{
+		Step:     "download",
+		Message:  "Setting up MCP server binary...",
+		Progress: 10,
+	}
+
+	binaryPath, err := inst.setupBinary()
+	if err != nil {
+		progress.Error = fmt.Sprintf("Failed to setup binary: %v", err)
+		return progress
+	}
+
+	// Step 2: Create config.json
+	progress.Step = "config"
+	progress.Message = "Creating configuration file..."
+	progress.Progress = 40
+
+	apiURL := "https://api.agentpmt.com"
+	if req.Environment == "test" {
+		apiURL = "https://test.api.agentpmt.com"
+	}
+
+	err = inst.createConfig(filepath.Dir(binaryPath), req.APIKey, req.BudgetKey, apiURL)
+	if err != nil {
+		progress.Error = fmt.Sprintf("Failed to create config: %v", err)
+		return progress
+	}
+
+	// Step 3: Configure tools
+	progress.Step = "configure"
+	progress.Message = "Configuring AI tools..."
+	progress.Progress = 60
+
+	for _, toolID := range req.SelectedTools {
+		err := inst.configureTool(toolID, binaryPath)
+		if err != nil {
+			progress.Error = fmt.Sprintf("Failed to configure %s: %v", toolID, err)
+			return progress
+		}
+	}
+
+	progress.Step = "complete"
+	progress.Message = "Installation complete!"
+	progress.Progress = 100
+
+	return progress
+}
+
+func (inst *Installer) setupBinary() (string, error) {
+	osName := runtime.GOOS
+	archName := runtime.GOARCH
+
+	var binaryFilename string
+	switch osName {
+	case "windows":
+		binaryFilename = binaryName + ".exe"
+	default:
+		binaryFilename = binaryName
+	}
+
+	home, err := os.UserHomeDir()
+	if err != nil {
+		return "", err
+	}
+
+	installPath := filepath.Join(home, installDir)
+	err = os.MkdirAll(installPath, 0755)
+	if err != nil {
+		return "", err
+	}
+
+	binaryPath := filepath.Join(installPath, binaryFilename)
+
+	// Copy from distribution/binaries
+	srcBinary := filepath.Join("..", "..", "..", "distribution", "binaries", fmt.Sprintf("%s-%s", osName, archName), binaryFilename)
+	if pathExists(srcBinary) {
+		input, err := os.ReadFile(srcBinary)
+		if err != nil {
+			return "", err
+		}
+
+		err = os.WriteFile(binaryPath, input, 0755)
+		if err != nil {
+			return "", err
+		}
+	} else {
+		return "", fmt.Errorf("binary not found at %s", srcBinary)
+	}
+
+	return binaryPath, nil
+}
+
+func (inst *Installer) createConfig(dir, apiKey, budgetKey, apiURL string) error {
+	config := map[string]string{
+		"api_key":    apiKey,
+		"budget_key": budgetKey,
+		"api_url":    apiURL,
+	}
+
+	configPath := filepath.Join(dir, "config.json")
+	data, err := json.MarshalIndent(config, "", "  ")
+	if err != nil {
+		return err
+	}
+
+	return os.WriteFile(configPath, data, 0644)
+}
+
+func (inst *Installer) configureTool(toolID, binaryPath string) error {
+	switch toolID {
+	case "claude-desktop":
+		return inst.configureClaudeDesktop(binaryPath)
+	case "claude-code":
+		return inst.configureClaudeCode(binaryPath)
+	case "cursor":
+		return inst.configureCursor(binaryPath)
+	case "vscode":
+		return inst.configureVSCode(binaryPath)
+	case "zed":
+		return inst.configureZed(binaryPath)
+	case "windsurf":
+		return inst.configureWindsurf(binaryPath)
+	case "jetbrains":
+		return nil // GUI configuration required
+	default:
+		return fmt.Errorf("unknown tool: %s", toolID)
+	}
+}
+
+func (inst *Installer) configureClaudeDesktop(binaryPath string) error {
+	home, _ := os.UserHomeDir()
+	var configPath string
+
+	switch runtime.GOOS {
+	case "darwin":
+		configPath = filepath.Join(home, "Library/Application Support/Claude/claude_desktop_config.json")
+	case "linux":
+		configPath = filepath.Join(home, ".config/Claude/claude_desktop_config.json")
+	case "windows":
+		configPath = filepath.Join(os.Getenv("APPDATA"), "Claude/claude_desktop_config.json")
+	default:
+		return fmt.Errorf("unsupported OS: %s", runtime.GOOS)
+	}
+
+	os.MkdirAll(filepath.Dir(configPath), 0755)
+
+	var config map[string]interface{}
+	data, err := os.ReadFile(configPath)
+	if err == nil {
+		json.Unmarshal(data, &config)
+	} else {
+		config = make(map[string]interface{})
+	}
+
+	if config["mcpServers"] == nil {
+		config["mcpServers"] = make(map[string]interface{})
+	}
+
+	mcpServers := config["mcpServers"].(map[string]interface{})
+	mcpServers["agent-payment"] = map[string]interface{}{
+		"command": binaryPath,
+	}
+
+	data, err = json.MarshalIndent(config, "", "  ")
+	if err != nil {
+		return err
+	}
+
+	return os.WriteFile(configPath, data, 0644)
+}
+
+func (inst *Installer) configureClaudeCode(binaryPath string) error {
+	home, _ := os.UserHomeDir()
+	configPath := filepath.Join(home, ".claude.json")
+
+	var config map[string]interface{}
+	data, err := os.ReadFile(configPath)
+	if err == nil {
+		json.Unmarshal(data, &config)
+	} else {
+		config = make(map[string]interface{})
+	}
+
+	// Configure at USER SCOPE (global)
+	if config["mcpServers"] == nil {
+		config["mcpServers"] = make(map[string]interface{})
+	}
+
+	mcpServers := config["mcpServers"].(map[string]interface{})
+	mcpServers["agent-payment"] = map[string]interface{}{
+		"command": binaryPath,
+	}
+
+	data, err = json.MarshalIndent(config, "", "  ")
+	if err != nil {
+		return err
+	}
+
+	return os.WriteFile(configPath, data, 0644)
+}
+
+func (inst *Installer) configureCursor(binaryPath string) error {
+	home, _ := os.UserHomeDir()
+	configPath := filepath.Join(home, ".cursor/mcp.json")
+
+	os.MkdirAll(filepath.Dir(configPath), 0755)
+
+	var config map[string]interface{}
+	data, err := os.ReadFile(configPath)
+	if err == nil {
+		json.Unmarshal(data, &config)
+	} else {
+		config = make(map[string]interface{})
+	}
+
+	if config["mcpServers"] == nil {
+		config["mcpServers"] = make(map[string]interface{})
+	}
+
+	mcpServers := config["mcpServers"].(map[string]interface{})
+	mcpServers["agent-payment"] = map[string]interface{}{
+		"command": binaryPath,
+	}
+
+	data, err = json.MarshalIndent(config, "", "  ")
+	if err != nil {
+		return err
+	}
+
+	return os.WriteFile(configPath, data, 0644)
+}
+
+func (inst *Installer) configureVSCode(binaryPath string) error {
+	home, _ := os.UserHomeDir()
+	var configPath string
+
+	switch runtime.GOOS {
+	case "darwin":
+		configPath = filepath.Join(home, "Library/Application Support/Code/User/mcp.json")
+	case "linux":
+		configPath = filepath.Join(home, ".config/Code/User/mcp.json")
+	case "windows":
+		configPath = filepath.Join(os.Getenv("APPDATA"), "Code/User/mcp.json")
+	default:
+		return fmt.Errorf("unsupported OS: %s", runtime.GOOS)
+	}
+
+	os.MkdirAll(filepath.Dir(configPath), 0755)
+
+	var config map[string]interface{}
+	data, err := os.ReadFile(configPath)
+	if err == nil {
+		json.Unmarshal(data, &config)
+	} else {
+		config = make(map[string]interface{})
+	}
+
+	// VS Code uses "servers" not "mcpServers"
+	if config["servers"] == nil {
+		config["servers"] = make(map[string]interface{})
+	}
+
+	servers := config["servers"].(map[string]interface{})
+	servers["agent-payment"] = map[string]interface{}{
+		"command": binaryPath,
+	}
+
+	data, err = json.MarshalIndent(config, "", "  ")
+	if err != nil {
+		return err
+	}
+
+	return os.WriteFile(configPath, data, 0644)
+}
+
+func (inst *Installer) configureZed(binaryPath string) error {
+	home, _ := os.UserHomeDir()
+	configPath := filepath.Join(home, ".config/zed/settings.json")
+
+	os.MkdirAll(filepath.Dir(configPath), 0755)
+
+	var config map[string]interface{}
+	data, err := os.ReadFile(configPath)
+	if err == nil {
+		json.Unmarshal(data, &config)
+	} else {
+		config = make(map[string]interface{})
+	}
+
+	// Zed uses "context_servers"
+	if config["context_servers"] == nil {
+		config["context_servers"] = make(map[string]interface{})
+	}
+
+	contextServers := config["context_servers"].(map[string]interface{})
+	contextServers["agent-payment"] = map[string]interface{}{
+		"command": binaryPath,
+	}
+
+	data, err = json.MarshalIndent(config, "", "  ")
+	if err != nil {
+		return err
+	}
+
+	return os.WriteFile(configPath, data, 0644)
+}
+
+func (inst *Installer) configureWindsurf(binaryPath string) error {
+	home, _ := os.UserHomeDir()
+	configPath := filepath.Join(home, ".codeium/windsurf/mcp_config.json")
+
+	os.MkdirAll(filepath.Dir(configPath), 0755)
+
+	var config map[string]interface{}
+	data, err := os.ReadFile(configPath)
+	if err == nil {
+		json.Unmarshal(data, &config)
+	} else {
+		config = make(map[string]interface{})
+	}
+
+	if config["mcpServers"] == nil {
+		config["mcpServers"] = make(map[string]interface{})
+	}
+
+	mcpServers := config["mcpServers"].(map[string]interface{})
+	mcpServers["agent-payment"] = map[string]interface{}{
+		"command": binaryPath,
+	}
+
+	data, err = json.MarshalIndent(config, "", "  ")
+	if err != nil {
+		return err
+	}
+
+	return os.WriteFile(configPath, data, 0644)
+}
+
+func pathExists(path string) bool {
+	_, err := os.Stat(path)
+	return err == nil
+}
