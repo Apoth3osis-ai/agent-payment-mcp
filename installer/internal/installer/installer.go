@@ -209,12 +209,10 @@ func (inst *Installer) configureClaudeDesktop(binaryPath string) error {
 
 	os.MkdirAll(filepath.Dir(configPath), 0755)
 
-	var config map[string]interface{}
+	config := make(map[string]interface{})
 	data, err := os.ReadFile(configPath)
 	if err == nil {
 		json.Unmarshal(data, &config)
-	} else {
-		config = make(map[string]interface{})
 	}
 
 	if config["mcpServers"] == nil {
@@ -238,12 +236,10 @@ func (inst *Installer) configureClaudeCode(binaryPath string) error {
 	home, _ := os.UserHomeDir()
 	configPath := filepath.Join(home, ".claude.json")
 
-	var config map[string]interface{}
+	config := make(map[string]interface{})
 	data, err := os.ReadFile(configPath)
 	if err == nil {
 		json.Unmarshal(data, &config)
-	} else {
-		config = make(map[string]interface{})
 	}
 
 	// Configure at USER SCOPE (global)
@@ -270,12 +266,10 @@ func (inst *Installer) configureCursor(binaryPath string) error {
 
 	os.MkdirAll(filepath.Dir(configPath), 0755)
 
-	var config map[string]interface{}
+	config := make(map[string]interface{})
 	data, err := os.ReadFile(configPath)
 	if err == nil {
 		json.Unmarshal(data, &config)
-	} else {
-		config = make(map[string]interface{})
 	}
 
 	if config["mcpServers"] == nil {
@@ -312,12 +306,10 @@ func (inst *Installer) configureVSCode(binaryPath string) error {
 
 	os.MkdirAll(filepath.Dir(configPath), 0755)
 
-	var config map[string]interface{}
+	config := make(map[string]interface{})
 	data, err := os.ReadFile(configPath)
 	if err == nil {
 		json.Unmarshal(data, &config)
-	} else {
-		config = make(map[string]interface{})
 	}
 
 	// VS Code uses "servers" not "mcpServers"
@@ -344,12 +336,10 @@ func (inst *Installer) configureZed(binaryPath string) error {
 
 	os.MkdirAll(filepath.Dir(configPath), 0755)
 
-	var config map[string]interface{}
+	config := make(map[string]interface{})
 	data, err := os.ReadFile(configPath)
 	if err == nil {
 		json.Unmarshal(data, &config)
-	} else {
-		config = make(map[string]interface{})
 	}
 
 	// Zed uses "context_servers"
@@ -376,12 +366,10 @@ func (inst *Installer) configureWindsurf(binaryPath string) error {
 
 	os.MkdirAll(filepath.Dir(configPath), 0755)
 
-	var config map[string]interface{}
+	config := make(map[string]interface{})
 	data, err := os.ReadFile(configPath)
 	if err == nil {
 		json.Unmarshal(data, &config)
-	} else {
-		config = make(map[string]interface{})
 	}
 
 	if config["mcpServers"] == nil {
