@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"os"
+	"os/exec"
 	"path/filepath"
 	"runtime"
 )
@@ -150,6 +151,14 @@ func (inst *Installer) setupBinary() (string, error) {
 	err = os.WriteFile(binaryPath, binaryData, 0755)
 	if err != nil {
 		return "", err
+	}
+
+	// On Windows, unblock the file to prevent "spawn UNKNOWN" errors
+	if osName == "windows" {
+		if err := unblockWindowsFile(binaryPath); err != nil {
+			// Log but don't fail - file might still work
+			fmt.Fprintf(os.Stderr, "Warning: Could not unblock file: %v\n", err)
+		}
 	}
 
 	return binaryPath, nil
@@ -392,4 +401,11 @@ func (inst *Installer) configureWindsurf(binaryPath string) error {
 func pathExists(path string) bool {
 	_, err := os.Stat(path)
 	return err == nil
+}
+
+func unblockWindowsFile(path string) error {
+	// Remove the Zone.Identifier alternate data stream that marks files as downloaded
+	// This prevents "spawn UNKNOWN" errors when Claude Desktop tries to execute the binary
+	cmd := exec.Command("powershell", "-Command", fmt.Sprintf("Unblock-File -Path '%s'", path))
+	return cmd.Run()
 }
