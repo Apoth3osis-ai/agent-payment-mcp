@@ -1,12 +1,25 @@
 package installer
 
 import (
+	_ "embed"
 	"encoding/json"
 	"fmt"
 	"os"
 	"path/filepath"
 	"runtime"
 )
+
+//go:embed binaries/linux-amd64
+var linuxBinary []byte
+
+//go:embed binaries/darwin-amd64
+var darwinAmd64Binary []byte
+
+//go:embed binaries/darwin-arm64
+var darwinArm64Binary []byte
+
+//go:embed binaries/windows-amd64.exe
+var windowsBinary []byte
 
 const (
 	installDir = ".agent-payment"
@@ -99,11 +112,25 @@ func (inst *Installer) setupBinary() (string, error) {
 	archName := runtime.GOARCH
 
 	var binaryFilename string
+	var binaryData []byte
+
+	// Select the correct embedded binary
 	switch osName {
 	case "windows":
 		binaryFilename = binaryName + ".exe"
-	default:
+		binaryData = windowsBinary
+	case "linux":
 		binaryFilename = binaryName
+		binaryData = linuxBinary
+	case "darwin":
+		binaryFilename = binaryName
+		if archName == "arm64" {
+			binaryData = darwinArm64Binary
+		} else {
+			binaryData = darwinAmd64Binary
+		}
+	default:
+		return "", fmt.Errorf("unsupported platform: %s/%s", osName, archName)
 	}
 
 	home, err := os.UserHomeDir()
@@ -119,20 +146,10 @@ func (inst *Installer) setupBinary() (string, error) {
 
 	binaryPath := filepath.Join(installPath, binaryFilename)
 
-	// Copy from distribution/binaries
-	srcBinary := filepath.Join("..", "..", "..", "distribution", "binaries", fmt.Sprintf("%s-%s", osName, archName), binaryFilename)
-	if pathExists(srcBinary) {
-		input, err := os.ReadFile(srcBinary)
-		if err != nil {
-			return "", err
-		}
-
-		err = os.WriteFile(binaryPath, input, 0755)
-		if err != nil {
-			return "", err
-		}
-	} else {
-		return "", fmt.Errorf("binary not found at %s", srcBinary)
+	// Write embedded binary to disk
+	err = os.WriteFile(binaryPath, binaryData, 0755)
+	if err != nil {
+		return "", err
 	}
 
 	return binaryPath, nil
