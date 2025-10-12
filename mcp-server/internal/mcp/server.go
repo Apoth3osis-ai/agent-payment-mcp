@@ -92,8 +92,16 @@ func (s *Server) registerTool(toolDef api.ToolDefinition) error {
 	// Map display name to product ID for execution
 	s.nameToID[displayName] = toolDef.Function.Name
 
+	// Sanitize schema to be JSON Schema 2020-12 compliant (fix "required": true in properties)
+	sanitizedParams := sanitizeJSONSchema(toolDef.Function.Parameters)
+	
 	// Fix sentence case in parameter descriptions/examples
-	fixedParams := fixSentenceCaseInSchema(toolDef.Function.Parameters)
+	fixedParams := fixSentenceCaseInSchema(sanitizedParams)
+	
+	// Log if schema was modified during sanitization
+	if string(sanitizedParams) != string(toolDef.Function.Parameters) {
+		log.Printf("Sanitized schema for tool %s (fixed 'required' fields)", toolDef.Function.Name)
+	}
 
 	// Build full description with display name prefix for better UX
 	fullDescription := displayName + " — " + cleanDescription
@@ -185,6 +193,85 @@ func trimSpace(s string) string {
 	}
 
 	return s[start:end]
+}
+
+// sanitizeJSONSchema sanitizes API schemas to be JSON Schema 2020-12 compliant
+// Fixes:
+// 1. "required": true inside properties (moves to top-level required array)
+// 2. Other non-standard schema attributes
+func sanitizeJSONSchema(parametersJSON json.RawMessage) json.RawMessage {
+	if len(parametersJSON) == 0 {
+		return parametersJSON
+	}
+
+	// Parse the schema into a map
+	var schema map[string]interface{}
+	if err := json.Unmarshal(parametersJSON, &schema); err != nil {
+		// If parse fails, return as-is
+		return parametersJSON
+	}
+
+	// Extract properties and find fields with "required": true
+	properties, ok := schema["properties"].(map[string]interface{})
+	if !ok {
+		// No properties to fix
+		return parametersJSON
+	}
+
+	// Track which fields should be in the required array
+	requiredFields := []string{}
+	
+	// Check existing required array
+	if existingRequired, ok := schema["required"].([]interface{}); ok {
+		for _, field := range existingRequired {
+			if fieldStr, ok := field.(string); ok {
+				requiredFields = append(requiredFields, fieldStr)
+			}
+		}
+	}
+
+	// Process each property
+	for propName, propValue := range properties {
+		propMap, ok := propValue.(map[string]interface{})
+		if !ok {
+			continue
+		}
+
+		// Check for "required": true inside property
+		if required, exists := propMap["required"]; exists {
+			// Remove the invalid "required" from property
+			delete(propMap, "required")
+			
+			// If it was true, add to required array (avoid duplicates)
+			if requiredBool, ok := required.(bool); ok && requiredBool {
+				found := false
+				for _, existing := range requiredFields {
+					if existing == propName {
+						found = true
+						break
+					}
+				}
+				if !found {
+					requiredFields = append(requiredFields, propName)
+				}
+			}
+		}
+	}
+
+	// Update the schema with cleaned properties and required array
+	schema["properties"] = properties
+	if len(requiredFields) > 0 {
+		schema["required"] = requiredFields
+	}
+
+	// Marshal back to JSON
+	sanitized, err := json.Marshal(schema)
+	if err != nil {
+		// If marshal fails, return original
+		return parametersJSON
+	}
+
+	return json.RawMessage(sanitized)
 }
 
 // fixSentenceCaseInSchema fixes sentence case in parameter descriptions
