@@ -184,7 +184,7 @@ func trimSpace(s string) string {
 }
 
 // fixSentenceCaseInSchema fixes sentence case in parameter descriptions
-// Capitalizes first letter after "Example: \"" patterns
+// Capitalizes first letter after "Example: " patterns, handling both escaped and unescaped quotes
 func fixSentenceCaseInSchema(parametersJSON json.RawMessage) json.RawMessage {
 	if len(parametersJSON) == 0 {
 		return parametersJSON
@@ -193,9 +193,10 @@ func fixSentenceCaseInSchema(parametersJSON json.RawMessage) json.RawMessage {
 	// Convert to string for regex processing
 	schemaStr := string(parametersJSON)
 
-	// Pattern matches: Example: "text or Example: \"text
-	// We want to capitalize the first letter after the quote
-	re := regexp.MustCompile(`(Example:\s*\\?"?)([a-z])`)
+	// Pattern matches: Example: \"text (escaped quote in JSON) or Example: "text (unescaped)
+	// The (?:\\"") part matches either \" or just " to handle both cases
+	// We capture everything before the lowercase letter, then the lowercase letter itself
+	re := regexp.MustCompile(`(Example:\s*(?:\\")?)([a-z])`)
 
 	// Replace with capitalized version
 	fixedStr := re.ReplaceAllStringFunc(schemaStr, func(match string) string {
