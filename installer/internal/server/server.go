@@ -34,7 +34,15 @@ func (s *Server) Router() http.Handler {
 	}
 	mux.Handle("/", http.FileServer(http.FS(webFS)))
 
-	return mux
+	// Wrap with logging middleware
+	return loggingMiddleware(mux)
+}
+
+func loggingMiddleware(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		log.Printf("%s %s", r.Method, r.URL.Path)
+		next.ServeHTTP(w, r)
+	})
 }
 
 func (s *Server) handleDetect(w http.ResponseWriter, r *http.Request) {
