@@ -19,7 +19,7 @@ jobs:
         with:
           go-version: '1.21'
 
-      - name: Build binaries
+      - name: Build MCP Server binaries
         run: |
           cd mcp-server
 
@@ -47,51 +47,52 @@ jobs:
             -o ../distribution/binaries/linux-amd64/agent-payment-server \
             ./cmd/agent-payment-server
 
+      - name: Build Installer binaries
+        run: |
+          cd installer
+
+          # Embed MCP server binaries
+          mkdir -p internal/installer/binaries
+          cp ../distribution/binaries/windows-amd64/agent-payment-server.exe internal/installer/binaries/windows-amd64.exe
+          cp ../distribution/binaries/darwin-amd64/agent-payment-server internal/installer/binaries/darwin-amd64
+          cp ../distribution/binaries/darwin-arm64/agent-payment-server internal/installer/binaries/darwin-arm64
+          cp ../distribution/binaries/linux-amd64/agent-payment-server internal/installer/binaries/linux-amd64
+
+          # Build installer for each platform
+          # Windows
+          GOOS=windows GOARCH=amd64 go build \
+            -ldflags="-s -w" \
+            -o ../distribution/installers/agent-payment-installer-windows-amd64.exe \
+            ./cmd/installer
+
+          # macOS Intel
+          GOOS=darwin GOARCH=amd64 go build \
+            -ldflags="-s -w" \
+            -o ../distribution/installers/agent-payment-installer-macos-intel \
+            ./cmd/installer
+
+          # macOS Apple Silicon
+          GOOS=darwin GOARCH=arm64 go build \
+            -ldflags="-s -w" \
+            -o ../distribution/installers/agent-payment-installer-macos-arm64 \
+            ./cmd/installer
+
+          # Linux
+          GOOS=linux GOARCH=amd64 go build \
+            -ldflags="-s -w" \
+            -o ../distribution/installers/agent-payment-installer-linux-amd64 \
+            ./cmd/installer
+
       - name: Upload binaries
         uses: actions/upload-artifact@v4
         with:
           name: go-binaries
-          path: distribution/binaries/
-
-  build-pwa:
-    name: Build PWA
-    runs-on: ubuntu-latest
-    needs: build-go
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: '20'
-
-      - name: Download Go binaries
-        uses: actions/download-artifact@v4
-        with:
-          name: go-binaries
-          path: pwa/public/binaries
-
-      - name: Install PWA dependencies
-        run: |
-          cd pwa
-          npm ci
-
-      - name: Build PWA
-        run: |
-          cd pwa
-          npm run build
-
-      - name: Upload PWA build
-        uses: actions/upload-artifact@v4
-        with:
-          name: pwa-dist
-          path: pwa/dist/
+          path: distribution/
 
   release:
     name: Create Release
     runs-on: ubuntu-latest
-    needs: [build-go, build-pwa]
+    needs: build-go
     if: startsWith(github.ref, 'refs/tags/')
     steps:
       - name: Checkout code
@@ -100,58 +101,13 @@ jobs:
       - name: Download artifacts
         uses: actions/download-artifact@v4
 
-      - name: Create release packages
-        run: |
-          mkdir -p release
-
-          # Create ZIP for each platform
-          cd go-binaries
-
-          # Windows
-          cd windows-amd64
-          zip ../../release/agent-payment-windows-amd64.zip agent-payment-server.exe
-          cd ..
-
-          # macOS Intel
-          cd darwin-amd64
-          zip ../../release/agent-payment-macos-intel.zip agent-payment-server
-          cd ..
-
-          # macOS Apple Silicon
-          cd darwin-arm64
-          zip ../../release/agent-payment-macos-arm64.zip agent-payment-server
-          cd ..
-
-          # Linux
-          cd linux-amd64
-          zip ../../release/agent-payment-linux-amd64.zip agent-payment-server
-          cd ..
-
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v1
         with:
-          files: release/*
+          files: |
+            go-binaries/installers/*
+            go-binaries/binaries/**/*
           draft: false
           prerelease: false
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
-  deploy-pwa:
-    name: Deploy PWA
-    runs-on: ubuntu-latest
-    needs: build-pwa
-    if: github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/tags/')
-    steps:
-      - name: Download PWA build
-        uses: actions/download-artifact@v4
-        with:
-          name: pwa-dist
-          path: dist
-
-      # Add your deployment step here
-      # Examples: Deploy to Vercel, Netlify, AWS S3, etc.
-
-      - name: Deploy to hosting
-        run: |
-          echo "Deploy PWA to your hosting service"
-          # Add deployment commands here

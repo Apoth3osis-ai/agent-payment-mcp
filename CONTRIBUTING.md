@@ -13,7 +13,6 @@ Thank you for your interest in contributing! This document provides guidelines f
 
 ### Prerequisites
 
-- Node.js 20+
 - Go 1.21+
 - Git
 - A GitHub account
@@ -27,19 +26,19 @@ git clone https://github.com/YOUR-USERNAME/agent-payment-mcp
 cd agent-payment-mcp
 
 # Add upstream remote
-git remote add upstream https://github.com/your-org/agent-payment-mcp
+git remote add upstream https://github.com/Apoth3osis-ai/agent-payment-mcp
 ```
 
 ### Setup Development Environment
 
 ```bash
-# Install PWA dependencies
-cd pwa
-npm install
+# Install MCP Server dependencies
+cd mcp-server
+go mod download
 cd ..
 
-# Install Go dependencies
-cd mcp-server
+# Install Installer dependencies
+cd installer
 go mod download
 cd ..
 ```
@@ -68,16 +67,16 @@ Follow our code style guidelines (see below).
 ### 3. Test Your Changes
 
 ```bash
-# Test PWA
-cd pwa
-npm run test
-npm run build  # Ensure it builds
-cd ..
-
-# Test Go server
+# Test MCP Server
 cd mcp-server
 go test ./...
 go build ./cmd/agent-payment-server  # Ensure it builds
+cd ..
+
+# Test Installer
+cd installer
+go test ./...
+go build ./cmd/installer  # Ensure it builds
 cd ..
 ```
 
@@ -111,34 +110,7 @@ Then create a Pull Request on GitHub.
 
 ## Code Style Guidelines
 
-### TypeScript/React (PWA)
-
-- Use TypeScript for type safety
-- Follow React hooks best practices
-- Use functional components
-- Keep components small and focused
-- Use meaningful variable and function names
-- Add JSDoc comments for complex functions
-- Run `npm run lint` before committing
-
-Example:
-
-```typescript
-/**
- * Encrypts JSON data using AES-GCM
- * @param key - CryptoKey for encryption
- * @param data - Data to encrypt
- * @returns Encrypted data with IV
- */
-export async function encryptJSON(
-  key: CryptoKey,
-  data: unknown
-): Promise<{ iv: Uint8Array; ciphertext: ArrayBuffer }> {
-  // Implementation
-}
-```
-
-### Go (MCP Server)
+### Go
 
 - Follow standard Go conventions
 - Use `gofmt` for formatting
@@ -152,39 +124,31 @@ Example:
 
 ```go
 // FetchTools retrieves available tools from the Agent Payment API
-func (c *Client) FetchTools(ctx context.Context) ([]Tool, error) {
+func (c *Client) FetchTools(page, pageSize int) (*ToolsResponse, error) {
     // Implementation
 }
 ```
 
-### CSS
+### HTML/CSS/JavaScript (Installer Web UI)
 
+- Keep HTML semantic and accessible
+- Use vanilla JavaScript (no frameworks)
+- Keep JavaScript simple and maintainable
 - Use CSS variables for theming
-- Follow BEM naming when appropriate
-- Keep selectors specific but not overly nested
 - Support both light and dark modes
-- Use semantic class names
+- Ensure mobile responsiveness
 
 Example:
 
 ```css
 .tool-card {
   background: var(--color-bg-secondary);
-}
-
-.tool-card__title {
-  font-size: 1.25rem;
+  padding: 1rem;
+  border-radius: 8px;
 }
 ```
 
 ## Testing Requirements
-
-### PWA Tests
-
-- Write unit tests for utility functions
-- Test React components with React Testing Library
-- Test API client with mock responses
-- Ensure crypto functions work correctly
 
 ### Go Tests
 
@@ -193,17 +157,25 @@ Example:
 - Test API client with mock server
 - Achieve >80% code coverage
 
+Example:
+
+```go
+func TestFetchTools(t *testing.T) {
+    // Test implementation
+}
+```
+
 ### Integration Tests
 
-- Test full installer generation flow
-- Test Go server with real API (use test credentials)
+- Test installer flow end-to-end
+- Test MCP server with real API (use test credentials)
 - Test desktop client integration (manual)
 
 ## Documentation
 
 - Update README.md if adding features
-- Add JSDoc/GoDoc comments for new functions
-- Update IMPLEMENT_PLAN.md if changing architecture
+- Add GoDoc comments for new functions
+- Update technical docs in `docs/development/` if changing architecture
 - Include examples in documentation
 
 ## Pull Request Guidelines
@@ -229,23 +201,20 @@ Example:
 
 ```markdown
 ## What
-Adds filtering capability to the Tools page to search tools by name.
+Adds filtering capability to the MCP server tool list.
 
 ## Why
-Users requested ability to quickly find tools in a long list.
+Improves performance when dealing with large tool sets.
 
 ## How
-- Added search input component
-- Implemented client-side filtering
-- Updated Tools component to filter results
+- Added caching layer to API client
+- Implemented filtering in server registration
+- Updated tool handler to use cache
 
 ## Testing
-- Tested with 50+ tools
-- Verified case-insensitive search
-- Checked mobile responsiveness
-
-## Screenshots
-[Include screenshots here]
+- Tested with 100+ tools
+- Verified cache invalidation works correctly
+- Checked memory usage
 ```
 
 ### Review Process
@@ -264,8 +233,8 @@ Include:
 - Clear description of the bug
 - Steps to reproduce
 - Expected vs actual behavior
-- Environment (OS, browser, versions)
-- Screenshots if applicable
+- Environment (OS, Go version, etc.)
+- Error logs if applicable
 
 ### Feature Requests
 
@@ -275,11 +244,29 @@ Include:
 - Proposed solution (if any)
 - Alternatives considered
 
+## Project Structure
+
+```
+agent-payment-mcp/
+├── mcp-server/        # MCP server (Go)
+│   ├── cmd/           # Main applications
+│   ├── internal/      # Internal packages
+│   └── go.mod
+├── installer/         # Installer (Go)
+│   ├── cmd/           # Installer binary
+│   ├── internal/      # Installer logic & embedded web UI
+│   └── go.mod
+├── docs/              # Documentation
+│   ├── INSTALLATION.md
+│   └── development/   # Technical docs
+└── README.md          # Customer-facing documentation
+```
+
 ## Questions?
 
-- Open a GitHub Discussion
-- Join our community chat
+- Open a GitHub Issue
 - Email: support@agentpmt.com
+- Website: [agentpmt.com](https://agentpmt.com)
 
 ## License
 
