@@ -225,19 +225,21 @@ func toSentenceCase(s string) string {
 }
 
 // convertParametersToSchema converts API parameter JSON to jsonschema.Schema
-// We unmarshal directly to preserve all fields
+// Note: This is only used for SDK registration compatibility. Actual tool execution
+// bypasses the SDK and uses raw JSON schemas to preserve the API's exact format.
 func convertParametersToSchema(parametersJSON json.RawMessage) *jsonschema.Schema {
 	// If no parameters provided, create a minimal valid schema
 	if len(parametersJSON) == 0 || string(parametersJSON) == "null" {
 		parametersJSON = []byte(`{"type":"object","properties":{}}`)
 	}
 
-	// Unmarshal directly into jsonschema.Schema
-	// The SDK's jsonschema.Schema can unmarshal from JSON and preserve fields
+	// Attempt to unmarshal into SDK's jsonschema.Schema
+	// This may fail for non-standard schemas (e.g., "required": true inside properties)
+	// but that's okay because we use raw schemas for the actual tool responses
 	var schema jsonschema.Schema
 	if err := json.Unmarshal(parametersJSON, &schema); err != nil {
-		log.Printf("Warning: failed to unmarshal schema: %v", err)
-		// Return minimal schema on error
+		// Silently fall back to minimal schema - SDK registration is just for compatibility
+		// Real tool execution uses raw JSON schemas via our custom RPC handler
 		json.Unmarshal([]byte(`{"type":"object","properties":{}}`), &schema)
 	}
 
