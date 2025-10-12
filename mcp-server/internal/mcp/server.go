@@ -95,10 +95,14 @@ func (s *Server) registerTool(toolDef api.ToolDefinition) error {
 	// Fix sentence case in parameter descriptions/examples
 	fixedParams := fixSentenceCaseInSchema(toolDef.Function.Parameters)
 
+	// Build full description with display name prefix for better UX
+	fullDescription := displayName + " — " + cleanDescription
+
 	// Store tool with raw schema for tools/list responses
+	// IMPORTANT: Use product ID as name (MCP requires ^[a-zA-Z0-9_-]{1,64}$, no spaces)
 	rawTool := ToolWithRawSchema{
-		Name:        displayName,                    // Use readable name
-		Description: cleanDescription,                // Use clean description
+		Name:        toolDef.Function.Name,          // Product ID (MCP-compliant)
+		Description: fullDescription,                 // Full description with name
 		InputSchema: fixedParams,
 	}
 	// Ensure we have valid JSON schema
