@@ -135,6 +135,11 @@ document.getElementById('install-btn').addEventListener('click', async () => {
                 document.getElementById('form-container').style.display = 'none';
                 document.getElementById('progress-section').style.display = 'none';
                 document.getElementById('success-box').style.display = 'block';
+
+                // Show Windows Defender warning on Windows
+                if (navigator.platform.toLowerCase().includes('win')) {
+                    document.getElementById('windows-defender-warning').style.display = 'block';
+                }
             }
         }
     } catch (err) {

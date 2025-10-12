@@ -18,6 +18,16 @@
         <div id="success-box" class="success-box" style="display: none;">
             <strong>✓ Installation Complete!</strong>
             <p>Agent Payment MCP has been successfully installed. Please restart your AI tools for the changes to take effect.</p>
+            <div id="windows-defender-warning" style="display: none; margin-top: 15px; padding: 10px; background: #fff3cd; border-left: 4px solid #ffc107; border-radius: 4px;">
+                <strong>⚠️ Windows Users:</strong>
+                <p style="margin: 5px 0;">Windows Defender may flag the MCP server as a threat (false positive). If the server doesn't start:</p>
+                <ol style="margin: 5px 0 5px 20px; font-size: 14px;">
+                    <li>Open Windows Security → Virus & threat protection</li>
+                    <li>Click "Manage settings"</li>
+                    <li>Scroll to "Exclusions" and click "Add or remove exclusions"</li>
+                    <li>Add this folder: <code style="background: #f5f5f5; padding: 2px 6px; border-radius: 3px;">%USERPROFILE%\.agent-payment</code></li>
+                </ol>
+            </div>
         </div>
 
         <div id="form-container">

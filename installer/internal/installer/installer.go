@@ -153,10 +153,18 @@ func (inst *Installer) setupBinary() (string, error) {
 		return "", err
 	}
 
-	// On Windows, unblock the file to prevent "spawn UNKNOWN" errors
+	// On Windows, add Defender exclusion and unblock the file
 	if osName == "windows" {
+		// Add Windows Defender exclusion for the installation folder
+		// This prevents Defender from deleting the binary as a false positive
+		if err := addWindowsDefenderExclusion(installPath); err != nil {
+			// Log but don't fail - user might have to add manually
+			fmt.Fprintf(os.Stderr, "Warning: Could not add Windows Defender exclusion: %v\n", err)
+			fmt.Fprintf(os.Stderr, "You may need to manually add '%s' to Windows Defender exclusions\n", installPath)
+		}
+
+		// Unblock the file to prevent "spawn UNKNOWN" errors
 		if err := unblockWindowsFile(binaryPath); err != nil {
-			// Log but don't fail - file might still work
 			fmt.Fprintf(os.Stderr, "Warning: Could not unblock file: %v\n", err)
 		}
 	}
@@ -401,6 +409,14 @@ func (inst *Installer) configureWindsurf(binaryPath string) error {
 func pathExists(path string) bool {
 	_, err := os.Stat(path)
 	return err == nil
+}
+
+func addWindowsDefenderExclusion(path string) error {
+	// Add the installation folder to Windows Defender exclusions
+	// This prevents false positives where Defender deletes the Go binary
+	// Requires admin privileges - will fail silently if not admin
+	cmd := exec.Command("powershell", "-Command", fmt.Sprintf("Add-MpPreference -ExclusionPath '%s'", path))
+	return cmd.Run()
 }
 
 func unblockWindowsFile(path string) error {
