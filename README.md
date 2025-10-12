@@ -1,273 +1,160 @@
 # Agent Payment MCP
 
-Access AI-powered tools from Agent Payment API in Claude Desktop, Cursor, VS Code, Zed, IntelliJ IDEA, Windsurf, and more.
+> **One-click installer** to add 55+ premium AI tools to Claude Desktop, Cursor, VS Code, and other AI coding assistants.
 
-## 🤖 For AI Agents
+![Agent Payment MCP](agent-payment-logo.png)
 
-If you're an AI agent helping a user install this MCP server, please read **[AGENTS.md](AGENTS.md)** for structured installation instructions. It contains step-by-step guidance for automated setup.
+## What is This?
 
-## Overview
+Agent Payment MCP lets your AI coding assistant (like Claude Desktop) access powerful tools for:
 
-Agent Payment MCP provides a seamless way to integrate premium AI tools into your desktop workflows. The system consists of:
+- 🧮 **Smart Math** - Symbolic calculus, numerical computing, statistics
+- 📊 **Synthetic Data** - Generate realistic test data (people, companies, families, e-commerce)
+- 🔧 **Text Utilities** - 30+ text transformation tools (case conversion, formatting, etc.)
+- 🐍 **Python Isolation** - Run Python code with conflicting library versions safely
+- 🌐 **Network Tools** - WebSocket, MQTT, SMTP, Tor, IPFS access
+- 💾 **Immutable Storage** - TWINE cryptographic timestamping and decentralized storage
+- 🎲 **Random Data** - Cryptographically secure random bytes for keys and tokens
 
-- **PWA (Progressive Web App)** - Web interface to browse tools and generate installers
-- **Go MCP Server** - Lightweight standalone server (6-8MB) that proxies tools to desktop clients
-- **Universal Installer** - Automated setup for 8+ AI tools including Claude Desktop, Cursor, VS Code, Zed, JetBrains IDEs, Windsurf, and more
+All tools are pay-per-use with transparent pricing (most $0.01 per execution).
 
-## Quick Start
+## Quick Install
 
-### Automated Installation (Recommended)
+### Step 1: Get API Keys
 
-1. **Clone this repository:**
-   ```bash
-   git clone https://github.com/Apoth3osis-ai/agent-payment-mcp
-   cd agent-payment-mcp
-   ```
+Visit [agentpmt.com](https://agentpmt.com) and create an account to get:
+- **API Key** - Authenticates your requests
+- **Budget Key** - Controls spending limits
 
-2. **Configure API credentials:**
-   ```bash
-   cp .env.example .env
-   # Edit .env and add your actual API_KEY and BUDGET_KEY from https://agentpmt.com
-   ```
+### Step 2: Download Installer
 
-3. **Run universal installer:**
-   ```bash
-   ./scripts/install-mcp.sh
-   ```
+Download the installer for your operating system:
 
-   This script automatically:
-   - Detects installed AI tools (Claude Desktop, Cursor, VS Code, Zed, etc.)
-   - Configures MCP server for each detected tool
-   - Sets up the Go binary with your credentials
-
-4. **Restart your AI tools** and verify the MCP server appears
-
-### Manual Installation via PWA
-
-1. **Get API Credentials**
-   - Visit [agentpmt.com](https://agentpmt.com) to get your API and budget keys
-
-2. **Visit the PWA**
-   - Go to [install.agentpmt.com](https://install.agentpmt.com) (or your deployment URL)
-   - Enter your API credentials in Settings
-   - Browse available tools in the Tools tab
-   - Download installer for your platform from the Install tab
-
-3. **Install & Use**
-   - Run the downloaded installer
-   - Restart your desktop client
-   - Tools will appear in your MCP tools list
-
-### For AI Agents
-
-If you're an AI coding assistant helping with installation, see **[AGENTS.md](AGENTS.md)** for detailed agent-friendly instructions.
-
-### For Developers
-
-See [Building from Source](#building-from-source) below.
-
-## Architecture
-
+**Windows:**
 ```
-┌─────────────────────────────────────────────────────────────────┐
-│                        PWA (Browser)                             │
-│  - Enter API credentials (encrypted locally)                    │
-│  - Browse available tools                                        │
-│  - Download installers                                           │
-└─────────────────────────────────────────────────────────────────┘
-                              |
-                              | Downloads
-                              v
-┌─────────────────────────────────────────────────────────────────┐
-│                 Installer Package (ZIP/.mcpb)                    │
-│  - Go MCP Server binary                                          │
-│  - config.json (with user's API keys)                            │
-│  - Install script                                                │
-└─────────────────────────────────────────────────────────────────┘
-                              |
-                              | Installs to
-                              v
-┌─────────────────────────────────────────────────────────────────┐
-│              Desktop Client (Claude/Cursor/VS Code)              │
-│  - Runs Go MCP Server on startup                                │
-│  - Displays tools in native UI                                  │
-│  - Executes tools via MCP protocol                              │
-└─────────────────────────────────────────────────────────────────┘
-                              |
-                              | API Calls
-                              v
-┌─────────────────────────────────────────────────────────────────┐
-│                  Agent Payment API                               │
-│  - Provides tool definitions                                     │
-│  - Executes tool requests                                        │
-│  - Manages billing/budgets                                       │
-└─────────────────────────────────────────────────────────────────┘
+https://github.com/Apoth3osis-ai/agent-payment-mcp/releases/latest/download/agent-payment-installer-windows-amd64.exe
 ```
 
-## Project Structure
-
+**macOS (Apple Silicon - M1/M2/M3):**
 ```
-agent-payment-system/
-├── pwa/                    # Progressive Web App
-│   ├── src/
-│   │   ├── components/    # React components
-│   │   ├── routes/        # Page components
-│   │   └── lib/           # Utilities (crypto, storage, API)
-│   ├── public/            # Static assets
-│   └── package.json
-│
-├── mcp-server/            # Go MCP Server
-│   ├── cmd/               # Main application
-│   ├── internal/          # Server logic
-│   └── go.mod
-│
-├── distribution/          # Build outputs
-│   ├── binaries/         # Compiled Go binaries
-│   ├── packages/         # .mcpb and installer ZIPs
-│   └── templates/        # Install scripts & configs
-│
-├── scripts/              # Build scripts
-│   ├── build-all.sh
-│   ├── package-mcpb.sh
-│   └── package-installers.sh
-│
-└── .github/              # CI/CD
-    └── workflows/
+https://github.com/Apoth3osis-ai/agent-payment-mcp/releases/latest/download/agent-payment-installer-macos-arm64
 ```
 
-## Building from Source
-
-### Prerequisites
-
-- **Node.js 20+** (for PWA)
-- **Go 1.21+** (for MCP server)
-- **Git**
-
-### Initial Setup
-
-```bash
-# Clone repository
-git clone https://github.com/Apoth3osis-ai/agent-payment-mcp
-cd agent-payment-mcp
-
-# Install PWA dependencies
-cd pwa
-npm install
-cd ..
-
-# Initialize Go module
-cd mcp-server
-go mod download
-cd ..
+**macOS (Intel):**
+```
+https://github.com/Apoth3osis-ai/agent-payment-mcp/releases/latest/download/agent-payment-installer-macos-intel
 ```
 
-### Build Everything
-
-```bash
-# Build Go binaries for all platforms
-./scripts/build-all.sh
-
-# Build PWA
-cd pwa
-npm run build
-cd ..
-
-# Optional: Create distribution packages
-./scripts/package-mcpb.sh        # .mcpb packages for Claude
-./scripts/package-installers.sh  # Installer ZIPs for all editors
+**Linux:**
+```
+https://github.com/Apoth3osis-ai/agent-payment-mcp/releases/latest/download/agent-payment-installer-linux-amd64
 ```
 
-### Development
+### Step 3: Run Installer
 
-```bash
-# Run PWA dev server
-cd pwa
-npm run dev
-# Visit http://localhost:5173
+1. **Double-click the installer** - A browser window will open automatically
+2. **Enter your API credentials** from Step 1
+3. **Select your AI tools** - The installer auto-detects what's installed
+4. **Click "Install"** - Installation completes in seconds
+5. **Restart your AI tool** (Claude Desktop, Cursor, etc.)
 
-# Build Go server for local testing
-cd mcp-server
-go build -o agent-payment-server ./cmd/agent-payment-server
-./agent-payment-server  # Requires config.json
-```
-
-## Deployment
-
-### PWA Deployment
-
-The PWA can be deployed to any static hosting service:
-
-- **Vercel**: `cd pwa && vercel deploy`
-- **Netlify**: `cd pwa && netlify deploy --prod`
-- **AWS S3**: Upload `pwa/dist/` to S3 bucket
-- **GitHub Pages**: Use `.github/workflows/release.yml`
-
-### Automated Releases
-
-Push a git tag to trigger automated builds:
-
-```bash
-git tag v1.0.0
-git push origin v1.0.0
-```
-
-GitHub Actions will:
-1. Build Go binaries for all platforms
-2. Build PWA
-3. Create GitHub release with binaries
-4. Deploy PWA to hosting (configure in workflow)
-
-## Configuration
-
-### PWA Environment Variables
-
-Create `pwa/.env` for local development:
-
-```env
-VITE_API_BASE_URL=https://api.agentpmt.com
-```
-
-### MCP Server Configuration
-
-The server reads `config.json`:
-
-```json
-{
-  "api_key": "your-api-key",
-  "budget_key": "your-budget-key",
-  "api_url": "https://api.agentpmt.com"
-}
-```
+That's it! All 55+ tools are now available in your AI assistant.
 
 ## Supported AI Tools
 
-This MCP server works with the following AI coding assistants:
+The installer automatically detects and configures:
 
-- **Claude Desktop** - Full native MCP support
-- **Claude Code CLI** - Command-line interface with MCP
-- **Cursor** - VS Code fork with AI capabilities
-- **Windsurf** - Codeium-powered IDE
-- **VS Code** - With GitHub Copilot extension
-- **Zed** - Modern code editor with AI
-- **IntelliJ IDEA / JetBrains IDEs** (2025.1+) - Built-in MCP client
-- **Sourcegraph Cody** - Code intelligence with MCP via OpenCtx
+- ✅ **Claude Desktop** - Anthropic's official desktop app
+- ✅ **Claude Code CLI** - Command-line interface
+- ✅ **Cursor** - AI-powered VS Code fork
+- ✅ **VS Code** - With GitHub Copilot or similar extensions
+- ✅ **Windsurf** - Codeium's AI IDE
+- ✅ **Zed** - Modern code editor with AI
+- ⚙️ **JetBrains IDEs** - Manual configuration required (IntelliJ, PyCharm, etc.)
 
-The universal installer automatically detects and configures all installed tools.
+## Troubleshooting
 
-## Documentation
+### Windows: "Windows Defender blocked this app"
 
-- **[AGENTS.md](AGENTS.md)** - AI agent installation guide (for automated setup)
-- **[PWA Documentation](pwa/README.md)** - PWA development guide
-- **[MCP Server Documentation](mcp-server/README.md)** - Server implementation details
-- **[Contributing Guide](CONTRIBUTING.md)** - How to contribute
-- **[Implementation Plan](IMPLEMENT_PLAN.md)** - Detailed implementation guide
+This is normal for unsigned executables. To allow the installer:
 
-## Support
+**Option 1: Add Exclusion (Automatic)**
+The installer tries to do this automatically, but if it fails:
 
-- **Website**: [agentpmt.com](https://agentpmt.com)
-- **Documentation**: [docs.agentpmt.com](https://docs.agentpmt.com)
-- **Issues**: [GitHub Issues](https://github.com/Apoth3osis-ai/agent-payment-mcp/issues)
+1. Open **Windows Security** → **Virus & threat protection**
+2. Click **Manage settings**
+3. Scroll to **Exclusions** → **Add or remove exclusions**
+4. Click **Add an exclusion** → **Folder**
+5. Add: `%USERPROFILE%\.agent-payment`
+
+**Option 2: Run Anyway (One-time)**
+When Windows Defender warns you:
+1. Click **More info**
+2. Click **Run anyway**
+
+### Tools Not Showing Up
+
+1. **Restart your AI tool completely** - Close and reopen
+2. **Check MCP server status:**
+   - Claude Desktop: Open logs in `%APPDATA%\Claude\logs\` (Windows) or `~/Library/Application Support/Claude/logs/` (macOS)
+   - Look for `[agent-payment]` entries
+3. **Verify installation:**
+   - Check that `~/.agent-payment/agent-payment-server` exists
+   - Check that `~/.agent-payment/config.json` contains your API keys
+
+### Still Having Issues?
+
+- **Check logs:** Most AI tools have MCP logs showing connection errors
+- **Verify API keys:** Make sure they're copied correctly (no extra spaces)
+- **Check network:** Some tools require internet access to connect
+- **Open an issue:** [GitHub Issues](https://github.com/Apoth3osis-ai/agent-payment-mcp/issues)
+
+## What Gets Installed?
+
+The installer creates:
+```
+~/.agent-payment/
+├── agent-payment-server     # MCP server binary (6-8 MB)
+└── config.json              # Your API credentials (encrypted)
+```
+
+And updates your AI tool's MCP configuration file(s).
+
+## Security & Privacy
+
+- ✅ **API keys stored locally** - Never sent to third parties
+- ✅ **Open source** - All code is auditable on GitHub
+- ✅ **No telemetry** - We don't track usage beyond API billing
+- ✅ **Encrypted communication** - All API calls use HTTPS
+- ✅ **Budget controls** - Set spending limits via Budget Key
+
+## Uninstall
+
+To remove Agent Payment MCP:
+
+1. **Remove the MCP server:**
+   ```bash
+   rm -rf ~/.agent-payment
+   ```
+
+2. **Remove from AI tool configs:**
+   - Claude Desktop: Edit `claude_desktop_config.json` and remove `agent-payment` section
+   - Cursor: Edit `~/.cursor/mcp.json` and remove `agent-payment` section
+   - VS Code: Edit `mcp.json` in settings and remove `agent-payment` section
+   - Others: Similar process for each tool
+
+3. **Restart your AI tools**
+
+## Need Help?
+
+- 📖 **Documentation:** [Installation Guide](docs/INSTALLATION.md)
+- 🐛 **Issues:** [GitHub Issues](https://github.com/Apoth3osis-ai/agent-payment-mcp/issues)
+- 🌐 **Website:** [agentpmt.com](https://agentpmt.com)
+
+## For Developers
+
+Want to contribute or build from source? See [docs/development/](docs/development/) for technical documentation.
 
 ## License
 
-MIT - See [LICENSE](LICENSE) file for details.
+MIT - See [LICENSE](LICENSE)
