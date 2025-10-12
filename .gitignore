@@ -34,6 +34,17 @@ pwa/dist/
 pwa/dist-ssr/
 pwa/*.local
 
+# Python
+.venv/
+venv/
+env/
+__pycache__/
+*.py[cod]
+*$py.class
+*.egg-info/
+.pytest_cache/
+.coverage
+
 # Environment files
 .env
 .env.local
