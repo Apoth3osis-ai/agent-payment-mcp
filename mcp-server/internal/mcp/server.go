@@ -5,7 +5,10 @@ import (
 	"encoding/json"
 	"fmt"
 	"log"
+	"regexp"
+	"strings"
 	"sync"
+	"unicode"
 
 	"github.com/agentpmt/agent-payment-mcp-server/internal/api"
 	"github.com/modelcontextprotocol/go-sdk/jsonschema"
@@ -89,11 +92,14 @@ func (s *Server) registerTool(toolDef api.ToolDefinition) error {
 	// Map display name to product ID for execution
 	s.nameToID[displayName] = toolDef.Function.Name
 
+	// Fix sentence case in parameter descriptions/examples
+	fixedParams := fixSentenceCaseInSchema(toolDef.Function.Parameters)
+
 	// Store tool with raw schema for tools/list responses
 	rawTool := ToolWithRawSchema{
 		Name:        displayName,                    // Use readable name
 		Description: cleanDescription,                // Use clean description
-		InputSchema: toolDef.Function.Parameters,
+		InputSchema: fixedParams,
 	}
 	// Ensure we have valid JSON schema
 	if len(rawTool.InputSchema) == 0 || string(rawTool.InputSchema) == "null" {
@@ -101,8 +107,8 @@ func (s *Server) registerTool(toolDef api.ToolDefinition) error {
 	}
 	s.rawTools = append(s.rawTools, rawTool)
 
-	// Still register with SDK for tool execution (even though schema is wrong)
-	inputSchema := convertParametersToSchema(toolDef.Function.Parameters)
+	// Still register with SDK for tool execution (use fixed schema)
+	inputSchema := convertParametersToSchema(fixedParams)
 	serverTool := &mcp.ServerTool{
 		Tool: &mcp.Tool{
 			Name:        toolDef.Function.Name,
@@ -175,6 +181,46 @@ func trimSpace(s string) string {
 	}
 
 	return s[start:end]
+}
+
+// fixSentenceCaseInSchema fixes sentence case in parameter descriptions
+// Capitalizes first letter after "Example: \"" patterns
+func fixSentenceCaseInSchema(parametersJSON json.RawMessage) json.RawMessage {
+	if len(parametersJSON) == 0 {
+		return parametersJSON
+	}
+
+	// Convert to string for regex processing
+	schemaStr := string(parametersJSON)
+
+	// Pattern matches: Example: "text or Example: \"text
+	// We want to capitalize the first letter after the quote
+	re := regexp.MustCompile(`(Example:\s*\\?"?)([a-z])`)
+
+	// Replace with capitalized version
+	fixedStr := re.ReplaceAllStringFunc(schemaStr, func(match string) string {
+		// Find where the lowercase letter is
+		parts := re.FindStringSubmatch(match)
+		if len(parts) == 3 {
+			prefix := parts[1]
+			letter := parts[2]
+			// Capitalize the letter
+			return prefix + strings.ToUpper(letter)
+		}
+		return match
+	})
+
+	return json.RawMessage(fixedStr)
+}
+
+// toSentenceCase converts the first letter of a string to uppercase
+func toSentenceCase(s string) string {
+	if len(s) == 0 {
+		return s
+	}
+	runes := []rune(s)
+	runes[0] = unicode.ToUpper(runes[0])
+	return string(runes)
 }
 
 // convertParametersToSchema converts API parameter JSON to jsonschema.Schema
