@@ -11,6 +11,7 @@ go.work
 # Build artifacts
 /build/
 /dist/
+agent-payment-server
 
 # IDE
 .vscode/
