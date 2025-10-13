@@ -59,6 +59,14 @@ func (inst *Installer) Install(req InstallRequest) InstallProgress {
 		return InstallProgress{Error: "Please select at least one AI tool"}
 	}
 
+	// IMPORTANT: Only Claude Desktop is supported in v1.0.0
+	// Reject any other tools to prevent installation attempts
+	for _, toolID := range req.SelectedTools {
+		if toolID != "claude-desktop" {
+			return InstallProgress{Error: fmt.Sprintf("Tool '%s' is not yet supported. Currently only Claude Desktop is available. Other tools coming soon!", toolID)}
+		}
+	}
+
 	// Step 1: Copy/download binary
 	progress := InstallProgress{
 		Step:     "download",
