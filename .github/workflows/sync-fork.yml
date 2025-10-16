@@ -1,0 +1,44 @@
+name: Sync Fork with Upstream
+
+on:
+  schedule:
+    # Run daily at midnight UTC
+    - cron: '0 0 * * *'
+  workflow_dispatch:
+    # Allow manual triggering
+
+jobs:
+  sync:
+    name: Sync with Upstream
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout fork
+        uses: actions/checkout@v4
+        with:
+          repository: Abraxas1010/agent-payment-mcp
+          token: ${{ secrets.GITHUB_TOKEN }}
+          fetch-depth: 0
+
+      - name: Configure git
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+
+      - name: Add upstream remote
+        run: |
+          git remote add upstream https://github.com/Apoth3osis-ai/agent-payment-mcp.git
+          git fetch upstream
+
+      - name: Sync main branch
+        run: |
+          git checkout main
+          git merge upstream/main --no-edit || echo "No changes to merge or conflict occurred"
+
+      - name: Restore personal fork customizations
+        run: |
+          # Checkout the server.json from the fork to preserve personal namespace
+          git checkout origin/main -- server.json || true
+
+      - name: Push changes
+        run: |
+          git push origin main

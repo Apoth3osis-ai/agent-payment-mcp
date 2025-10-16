@@ -1,67 +1,143 @@
 {
-  "$schema": "https://registry.modelcontextprotocol.io/v0/server-config.schema.json",
-  "name": "io.github.apoth3osis-ai/agent-payment-mcp",
-  "version": "{{VERSION}}",
-  "description": "55+ premium AI tools including smart math, synthetic data generation, text utilities, Python isolation, network tools, immutable storage, and cryptographic random data. Pay-per-use with transparent pricing.",
-  "longDescription": "Agent Payment MCP provides your AI assistant with access to powerful tools for symbolic calculus, numerical computing, statistics, synthetic data generation (people, companies, families, e-commerce), 30+ text transformations, Python code execution with isolated environments, WebSocket/MQTT/SMTP/Tor/IPFS network access, TWINE cryptographic timestamping and decentralized storage, and cryptographically secure random byte generation. All tools are pay-per-use with transparent pricing (most $0.01 per execution).",
+  "$schema": "https://static.modelcontextprotocol.io/schemas/2025-09-29/server.schema.json",
+  "name": "io.github.Abraxas1010/agent-payment-mcp",
+  "description": "Secure USDC payments for AI agents on Base blockchain with budget controls and instant settlement.",
+  "longDescription": "AgentPMT enables AI agents to securely make real-world payments using USDC stablecoin on Base blockchain. Our platform provides granular budget controls, instant settlement, and API/MCP integration for autonomous transactions. Perfect for businesses leveraging AI automation, we bridge the gap between artificial intelligence and the digital economy with enterprise-grade security and complete spending oversight.",
   "license": "MIT",
   "homepage": "https://agentpmt.com",
   "repository": {
-    "type": "git",
-    "url": "https://github.com/Apoth3osis-ai/agent-payment-mcp.git"
+    "url": "https://github.com/Abraxas1010/agent-payment-mcp",
+    "source": "github"
   },
+  "version": "1.0.1",
   "packages": [
     {
-      "type": "mcpb",
-      "uri": "https://github.com/Apoth3osis-ai/agent-payment-mcp/releases/download/v{{VERSION}}/agent-payment-server",
-      "sha256": "{{SHA256_LINUX_AMD64}}",
-      "platforms": [
+      "registryType": "mcpb",
+      "identifier": "https://github.com/Abraxas1010/agent-payment-mcp/releases/download/v1.0.1/agent-payment-server",
+      "version": "1.0.1",
+      "fileSha256": "53c727257cb433b4d369306a0b46221f15a1c8a6d14eb0c83fea8f4ace4d4ee1",
+      "transport": {
+        "type": "stdio"
+      },
+      "runtimeHint": "binary",
+      "environmentVariables": [
         {
-          "os": "linux",
-          "arch": "amd64",
-          "uri": "https://github.com/Apoth3osis-ai/agent-payment-mcp/releases/download/v{{VERSION}}/agent-payment-server",
-          "sha256": "{{SHA256_LINUX_AMD64}}"
+          "name": "AGENT_PAYMENT_API_KEY",
+          "description": "Your AgentPMT API key for authentication",
+          "isRequired": true,
+          "format": "string",
+          "isSecret": true
         },
         {
-          "os": "darwin",
-          "arch": "amd64",
-          "uri": "https://github.com/Apoth3osis-ai/agent-payment-mcp/releases/download/v{{VERSION}}/agent-payment-server-darwin-amd64",
-          "sha256": "{{SHA256_DARWIN_AMD64}}"
-        },
-        {
-          "os": "darwin",
-          "arch": "arm64",
-          "uri": "https://github.com/Apoth3osis-ai/agent-payment-mcp/releases/download/v{{VERSION}}/agent-payment-server-darwin-arm64",
-          "sha256": "{{SHA256_DARWIN_ARM64}}"
-        },
-        {
-          "os": "windows",
-          "arch": "amd64",
-          "uri": "https://github.com/Apoth3osis-ai/agent-payment-mcp/releases/download/v{{VERSION}}/agent-payment-server-windows-amd64.exe",
-          "sha256": "{{SHA256_WINDOWS_AMD64}}"
+          "name": "AGENT_PAYMENT_BUDGET_KEY",
+          "description": "Your AgentPMT budget key for spending control",
+          "isRequired": true,
+          "format": "string",
+          "isSecret": true
         }
-      ]
+      ],
+      "platforms": ["linux-amd64"]
+    },
+    {
+      "registryType": "mcpb",
+      "identifier": "https://github.com/Abraxas1010/agent-payment-mcp/releases/download/v1.0.1/agent-payment-server-darwin-amd64",
+      "version": "1.0.1",
+      "fileSha256": "c151af56e81e1d9081feaa917c14eadae44780fa51b72e83431bb1b894bbc83e",
+      "transport": {
+        "type": "stdio"
+      },
+      "runtimeHint": "binary",
+      "environmentVariables": [
+        {
+          "name": "AGENT_PAYMENT_API_KEY",
+          "description": "Your AgentPMT API key for authentication",
+          "isRequired": true,
+          "format": "string",
+          "isSecret": true
+        },
+        {
+          "name": "AGENT_PAYMENT_BUDGET_KEY",
+          "description": "Your AgentPMT budget key for spending control",
+          "isRequired": true,
+          "format": "string",
+          "isSecret": true
+        }
+      ],
+      "platforms": ["darwin-amd64"]
+    },
+    {
+      "registryType": "mcpb",
+      "identifier": "https://github.com/Abraxas1010/agent-payment-mcp/releases/download/v1.0.1/agent-payment-server-darwin-arm64",
+      "version": "1.0.1",
+      "fileSha256": "ad5630f47e409b6cc18bf330896947b90ebe6a61c688587e00f196d4ccec47cd",
+      "transport": {
+        "type": "stdio"
+      },
+      "runtimeHint": "binary",
+      "environmentVariables": [
+        {
+          "name": "AGENT_PAYMENT_API_KEY",
+          "description": "Your AgentPMT API key for authentication",
+          "isRequired": true,
+          "format": "string",
+          "isSecret": true
+        },
+        {
+          "name": "AGENT_PAYMENT_BUDGET_KEY",
+          "description": "Your AgentPMT budget key for spending control",
+          "isRequired": true,
+          "format": "string",
+          "isSecret": true
+        }
+      ],
+      "platforms": ["darwin-arm64"]
+    },
+    {
+      "registryType": "mcpb",
+      "identifier": "https://github.com/Abraxas1010/agent-payment-mcp/releases/download/v1.0.1/agent-payment-server-windows-amd64.exe",
+      "version": "1.0.1",
+      "fileSha256": "bf8220131e001d06789561e064400e9dc5ea674e3a5bb17c9ed1e1b238a36f06",
+      "transport": {
+        "type": "stdio"
+      },
+      "runtimeHint": "binary",
+      "environmentVariables": [
+        {
+          "name": "AGENT_PAYMENT_API_KEY",
+          "description": "Your AgentPMT API key for authentication",
+          "isRequired": true,
+          "format": "string",
+          "isSecret": true
+        },
+        {
+          "name": "AGENT_PAYMENT_BUDGET_KEY",
+          "description": "Your AgentPMT budget key for spending control",
+          "isRequired": true,
+          "format": "string",
+          "isSecret": true
+        }
+      ],
+      "platforms": ["windows-amd64"]
     }
   ],
-  "remotes": [],
   "vendor": {
     "name": "AgentPMT",
-    "url": "https://agentpmt.com"
+    "websiteUrl": "https://agentpmt.com"
   },
   "categories": [
-    "tools",
-    "utilities",
-    "data"
+    "finance",
+    "payments",
+    "automation"
   ],
   "tags": [
-    "math",
-    "calculator",
-    "synthetic-data",
-    "text-utilities",
-    "python",
-    "network",
-    "storage",
-    "random",
-    "cryptography"
+    "payments",
+    "blockchain",
+    "usdc",
+    "stablecoin",
+    "base",
+    "budget-control",
+    "ai-agents",
+    "autonomous",
+    "enterprise"
   ]
 }
