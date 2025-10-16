@@ -94,6 +94,9 @@ jobs:
     runs-on: ubuntu-latest
     needs: build-go
     if: startsWith(github.ref, 'refs/tags/')
+    permissions:
+      contents: write
+      id-token: write
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -101,13 +104,54 @@ jobs:
       - name: Download artifacts
         uses: actions/download-artifact@v4
 
+      - name: Rename binaries for release
+        run: |
+          # MCP server binaries (for registry)
+          mkdir -p release-binaries
+          cp go-binaries/binaries/linux-amd64/agent-payment-server release-binaries/agent-payment-server
+          cp go-binaries/binaries/darwin-amd64/agent-payment-server release-binaries/agent-payment-server-darwin-amd64
+          cp go-binaries/binaries/darwin-arm64/agent-payment-server release-binaries/agent-payment-server-darwin-arm64
+          cp go-binaries/binaries/windows-amd64/agent-payment-server.exe release-binaries/agent-payment-server-windows-amd64.exe
+
+      - name: Calculate SHA256 hashes
+        id: hashes
+        run: |
+          echo "linux_amd64=$(sha256sum release-binaries/agent-payment-server | awk '{print $1}')" >> $GITHUB_OUTPUT
+          echo "darwin_amd64=$(sha256sum release-binaries/agent-payment-server-darwin-amd64 | awk '{print $1}')" >> $GITHUB_OUTPUT
+          echo "darwin_arm64=$(sha256sum release-binaries/agent-payment-server-darwin-arm64 | awk '{print $1}')" >> $GITHUB_OUTPUT
+          echo "windows_amd64=$(sha256sum release-binaries/agent-payment-server-windows-amd64.exe | awk '{print $1}')" >> $GITHUB_OUTPUT
+
+      - name: Update server.json with version and hashes
+        run: |
+          VERSION=${GITHUB_REF#refs/tags/v}
+          sed -i "s/{{VERSION}}/$VERSION/g" server.json
+          sed -i "s/{{SHA256_LINUX_AMD64}}/${{ steps.hashes.outputs.linux_amd64 }}/g" server.json
+          sed -i "s/{{SHA256_DARWIN_AMD64}}/${{ steps.hashes.outputs.darwin_amd64 }}/g" server.json
+          sed -i "s/{{SHA256_DARWIN_ARM64}}/${{ steps.hashes.outputs.darwin_arm64 }}/g" server.json
+          sed -i "s/{{SHA256_WINDOWS_AMD64}}/${{ steps.hashes.outputs.windows_amd64 }}/g" server.json
+          cat server.json
+
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v1
         with:
           files: |
             go-binaries/installers/*
-            go-binaries/binaries/**/*
+            release-binaries/*
           draft: false
           prerelease: false
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Install MCP Publisher
+        run: |
+          curl -L https://github.com/modelcontextprotocol/mcp-publisher/releases/latest/download/mcp-publisher-linux-amd64 -o mcp-publisher
+          chmod +x mcp-publisher
+          sudo mv mcp-publisher /usr/local/bin/
+
+      - name: Authenticate with GitHub OIDC
+        run: |
+          mcp-publisher login github --oidc
+
+      - name: Publish to MCP Registry
+        run: |
+          mcp-publisher publish

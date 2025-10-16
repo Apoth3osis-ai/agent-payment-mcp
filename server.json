@@ -1,0 +1,67 @@
+{
+  "$schema": "https://registry.modelcontextprotocol.io/v0/server-config.schema.json",
+  "name": "io.github.apoth3osis-ai/agent-payment-mcp",
+  "version": "{{VERSION}}",
+  "description": "55+ premium AI tools including smart math, synthetic data generation, text utilities, Python isolation, network tools, immutable storage, and cryptographic random data. Pay-per-use with transparent pricing.",
+  "longDescription": "Agent Payment MCP provides your AI assistant with access to powerful tools for symbolic calculus, numerical computing, statistics, synthetic data generation (people, companies, families, e-commerce), 30+ text transformations, Python code execution with isolated environments, WebSocket/MQTT/SMTP/Tor/IPFS network access, TWINE cryptographic timestamping and decentralized storage, and cryptographically secure random byte generation. All tools are pay-per-use with transparent pricing (most $0.01 per execution).",
+  "license": "MIT",
+  "homepage": "https://agentpmt.com",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Apoth3osis-ai/agent-payment-mcp.git"
+  },
+  "packages": [
+    {
+      "type": "mcpb",
+      "uri": "https://github.com/Apoth3osis-ai/agent-payment-mcp/releases/download/v{{VERSION}}/agent-payment-server",
+      "sha256": "{{SHA256_LINUX_AMD64}}",
+      "platforms": [
+        {
+          "os": "linux",
+          "arch": "amd64",
+          "uri": "https://github.com/Apoth3osis-ai/agent-payment-mcp/releases/download/v{{VERSION}}/agent-payment-server",
+          "sha256": "{{SHA256_LINUX_AMD64}}"
+        },
+        {
+          "os": "darwin",
+          "arch": "amd64",
+          "uri": "https://github.com/Apoth3osis-ai/agent-payment-mcp/releases/download/v{{VERSION}}/agent-payment-server-darwin-amd64",
+          "sha256": "{{SHA256_DARWIN_AMD64}}"
+        },
+        {
+          "os": "darwin",
+          "arch": "arm64",
+          "uri": "https://github.com/Apoth3osis-ai/agent-payment-mcp/releases/download/v{{VERSION}}/agent-payment-server-darwin-arm64",
+          "sha256": "{{SHA256_DARWIN_ARM64}}"
+        },
+        {
+          "os": "windows",
+          "arch": "amd64",
+          "uri": "https://github.com/Apoth3osis-ai/agent-payment-mcp/releases/download/v{{VERSION}}/agent-payment-server-windows-amd64.exe",
+          "sha256": "{{SHA256_WINDOWS_AMD64}}"
+        }
+      ]
+    }
+  ],
+  "remotes": [],
+  "vendor": {
+    "name": "AgentPMT",
+    "url": "https://agentpmt.com"
+  },
+  "categories": [
+    "tools",
+    "utilities",
+    "data"
+  ],
+  "tags": [
+    "math",
+    "calculator",
+    "synthetic-data",
+    "text-utilities",
+    "python",
+    "network",
+    "storage",
+    "random",
+    "cryptography"
+  ]
+}
