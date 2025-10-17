@@ -138,10 +138,10 @@ jobs:
         run: |
           # MCP server binaries (for registry)
           mkdir -p release-binaries
-          cp go-binaries/binaries/linux-amd64/agent-payment-server release-binaries/agent-payment-server
-          cp go-binaries/binaries/darwin-amd64/agent-payment-server release-binaries/agent-payment-server-darwin-amd64
-          cp go-binaries/binaries/darwin-arm64/agent-payment-server release-binaries/agent-payment-server-darwin-arm64
-          cp go-binaries/binaries/windows-amd64/agent-payment-server.exe release-binaries/agent-payment-server-windows-amd64.exe
+          cp go-binaries/distribution/binaries/linux-amd64/agent-payment-server release-binaries/agent-payment-server
+          cp go-binaries/distribution/binaries/darwin-amd64/agent-payment-server release-binaries/agent-payment-server-darwin-amd64
+          cp go-binaries/distribution/binaries/darwin-arm64/agent-payment-server release-binaries/agent-payment-server-darwin-arm64
+          cp go-binaries/distribution/binaries/windows-amd64/agent-payment-server.exe release-binaries/agent-payment-server-windows-amd64.exe
 
       - name: Calculate SHA256 hashes
         id: hashes
