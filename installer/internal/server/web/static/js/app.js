@@ -95,7 +95,6 @@ function updateCheckboxes() {
 document.getElementById('install-btn').addEventListener('click', async () => {
     const apiKey = document.getElementById('apiKey').value.trim();
     const budgetKey = document.getElementById('budgetKey').value.trim();
-    const environment = document.getElementById('environment').value;
 
     // Validate
     if (!apiKey) {
@@ -132,7 +131,6 @@ document.getElementById('install-btn').addEventListener('click', async () => {
             body: JSON.stringify({
                 apiKey,
                 budgetKey,
-                environment,
                 selectedTools
             })
         });

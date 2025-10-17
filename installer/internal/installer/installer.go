@@ -30,7 +30,6 @@ const (
 type InstallRequest struct {
 	APIKey        string   `json:"apiKey"`
 	BudgetKey     string   `json:"budgetKey"`
-	Environment   string   `json:"environment"` // "live" or "test"
 	SelectedTools []string `json:"selectedTools"`
 }
 
@@ -86,9 +85,6 @@ func (inst *Installer) Install(req InstallRequest) InstallProgress {
 	progress.Progress = 40
 
 	apiURL := "https://api.agentpmt.com"
-	if req.Environment == "test" {
-		apiURL = "https://test.api.agentpmt.com"
-	}
 
 	err = inst.createConfig(filepath.Dir(binaryPath), req.APIKey, req.BudgetKey, apiURL)
 	if err != nil {
