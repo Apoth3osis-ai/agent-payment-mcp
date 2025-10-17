@@ -96,11 +96,15 @@ jobs:
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
 
-          # Checkout main branch (we're currently in detached HEAD at tag)
+          # Fetch main branch
           git fetch origin main
-          git checkout main
 
-          # Copy built binaries to correct locations
+          # Switch to main branch without changing working directory
+          # This allows us to commit the newly built binaries
+          git symbolic-ref HEAD refs/heads/main
+          git reset --soft origin/main
+
+          # Add built binaries
           git add installer/build/ installer/internal/installer/binaries/
 
           # Commit if there are changes
