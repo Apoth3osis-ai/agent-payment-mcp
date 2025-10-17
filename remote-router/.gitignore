@@ -1,0 +1,50 @@
+# Binaries
+agent-payment-router
+agent-payment-router.exe
+*.exe
+*.dll
+*.so
+*.dylib
+
+# Build output
+distribution/binaries/
+distribution/packages/
+distribution/msix-content/
+
+# Test binaries
+*.test
+*.out
+
+# Config files with secrets
+config.json
+.env
+*.key
+*.pem
+*.pfx
+
+# Go workspace
+go.work
+go.work.sum
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Temporary files
+tmp/
+temp/
+*.tmp
+
+# Certificates (keep templates only)
+*.crt
+*.cer
+
+# Logs
+*.log

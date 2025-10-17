@@ -1,0 +1,231 @@
+name: Build and Release Remote Router
+
+on:
+  push:
+    tags:
+      - 'router-v*'
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Version to build (e.g., 1.0.0)'
+        required: true
+        default: '1.0.0-manual'
+
+jobs:
+  build:
+    name: Build Cross-Platform Binaries
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: '1.23'
+
+      - name: Determine version
+        id: version
+        run: |
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            VERSION="${{ github.event.inputs.version }}"
+          else
+            VERSION="${GITHUB_REF#refs/tags/router-v}"
+          fi
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+          echo "Building version: $VERSION"
+
+      - name: Build all platforms
+        run: |
+          cd remote-router
+          chmod +x scripts/build-all.sh
+          ./scripts/build-all.sh ${{ steps.version.outputs.version }}
+
+      - name: Calculate SHA256 hashes
+        id: hashes
+        run: |
+          cd remote-router/distribution/binaries
+          echo "windows=$(sha256sum windows-amd64/agent-payment-router.exe | awk '{print $1}')" >> $GITHUB_OUTPUT
+          echo "linux_amd64=$(sha256sum linux-amd64/agent-payment-router | awk '{print $1}')" >> $GITHUB_OUTPUT
+          echo "linux_arm64=$(sha256sum linux-arm64/agent-payment-router | awk '{print $1}')" >> $GITHUB_OUTPUT
+          echo "darwin_amd64=$(sha256sum darwin-amd64/agent-payment-router | awk '{print $1}')" >> $GITHUB_OUTPUT
+          echo "darwin_arm64=$(sha256sum darwin-arm64/agent-payment-router | awk '{print $1}')" >> $GITHUB_OUTPUT
+
+      - name: Test binaries
+        run: |
+          cd remote-router
+          echo "Testing Linux AMD64..."
+          ./scripts/test-stdio.sh distribution/binaries/linux-amd64/agent-payment-router || true
+
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: binaries
+          path: remote-router/distribution/binaries/
+
+  # Sign Windows binary (optional - requires Azure Trusted Signing or certificate)
+  sign-windows:
+    name: Sign Windows Binary
+    runs-on: windows-latest
+    needs: build
+    if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/')
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Download artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: binaries
+          path: remote-router/distribution/binaries/
+
+      # Option A: Azure Trusted Signing (if configured)
+      - name: Sign with Azure Trusted Signing
+        if: env.AZURE_TENANT_ID != ''
+        uses: Azure/trusted-signing-action@v1
+        with:
+          azure-tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          azure-client-id: ${{ secrets.AZURE_CLIENT_ID }}
+          azure-client-secret: ${{ secrets.AZURE_CLIENT_SECRET }}
+          endpoint: ${{ secrets.AZURE_CODE_SIGNING_ENDPOINT }}
+          trusted-signing-account-name: ${{ secrets.AZURE_SIGNING_ACCOUNT }}
+          certificate-profile-name: ${{ secrets.AZURE_CERT_PROFILE }}
+          files-folder: remote-router/distribution/binaries/windows-amd64
+          files-folder-filter: exe
+          timestamp-rfc3161: http://timestamp.acs.microsoft.com
+          timestamp-digest: SHA256
+
+      # Option B: Traditional certificate signing (alternative)
+      # Uncomment if using traditional code signing certificate
+      # - name: Sign with Certificate
+      #   if: env.AZURE_TENANT_ID == ''
+      #   run: |
+      #     # Decode certificate from base64
+      #     $pfxBytes = [Convert]::FromBase64String("${{ secrets.CODESIGN_CERT_BASE64 }}")
+      #     [IO.File]::WriteAllBytes("cert.pfx", $pfxBytes)
+      #
+      #     # Sign
+      #     & signtool sign /fd SHA256 /tr http://timestamp.digicert.com /td SHA256 `
+      #       /f cert.pfx /p "${{ secrets.CODESIGN_CERT_PASSWORD }}" `
+      #       remote-router/distribution/binaries/windows-amd64/agent-payment-router.exe
+      #
+      #     # Clean up
+      #     Remove-Item cert.pfx
+      #   shell: pwsh
+
+      - name: Upload signed binaries
+        uses: actions/upload-artifact@v4
+        with:
+          name: binaries-signed
+          path: remote-router/distribution/binaries/
+
+  release:
+    name: Create GitHub Release
+    runs-on: ubuntu-latest
+    needs: [build]
+    # Only run on tag push or manual trigger
+    if: github.event_name == 'push' || github.event_name == 'workflow_dispatch'
+    permissions:
+      contents: write
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Determine version
+        id: version
+        run: |
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            VERSION="${{ github.event.inputs.version }}"
+          else
+            VERSION="${GITHUB_REF#refs/tags/router-v}"
+          fi
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+
+      - name: Download binaries
+        uses: actions/download-artifact@v4
+        with:
+          name: binaries
+          path: remote-router/distribution/binaries/
+
+      # Try to download signed binaries if available
+      - name: Download signed binaries
+        uses: actions/download-artifact@v4
+        continue-on-error: true
+        with:
+          name: binaries-signed
+          path: remote-router/distribution/binaries/
+
+      - name: Rename binaries for release
+        run: |
+          cd remote-router/distribution/binaries
+          mkdir -p ../../release-files
+
+          # Copy with release-friendly names
+          cp windows-amd64/agent-payment-router.exe ../../release-files/agent-payment-router-windows-amd64.exe
+          cp linux-amd64/agent-payment-router ../../release-files/agent-payment-router-linux-amd64
+          cp linux-arm64/agent-payment-router ../../release-files/agent-payment-router-linux-arm64
+          cp darwin-amd64/agent-payment-router ../../release-files/agent-payment-router-darwin-amd64
+          cp darwin-arm64/agent-payment-router ../../release-files/agent-payment-router-darwin-arm64
+
+          # Copy installers
+          cp ../../distribution/templates/install-windows.ps1 ../../release-files/
+          cp ../../distribution/templates/install-linux.sh ../../release-files/
+          cp ../../distribution/templates/install-macos.sh ../../release-files/
+
+      - name: Create release notes
+        run: |
+          cd remote-router
+          cat > ../release-notes.md <<EOF
+          # AgentPMT Remote Router v${{ steps.version.outputs.version }}
+
+          Minimal, secure MCP server that routes stdio JSON-RPC to AgentPMT HTTPS API.
+
+          ## Installation
+
+          ### Windows
+          \`\`\`powershell
+          irm https://github.com/Apoth3osis-ai/agent-payment-mcp/releases/download/router-v${{ steps.version.outputs.version }}/install-windows.ps1 | iex
+          \`\`\`
+
+          ### Linux
+          \`\`\`bash
+          curl -fsSL https://github.com/Apoth3osis-ai/agent-payment-mcp/releases/download/router-v${{ steps.version.outputs.version }}/install-linux.sh | bash
+          \`\`\`
+
+          ### macOS
+          \`\`\`bash
+          curl -fsSL https://github.com/Apoth3osis-ai/agent-payment-mcp/releases/download/router-v${{ steps.version.outputs.version }}/install-macos.sh | bash
+          \`\`\`
+
+          ## Manual Installation
+
+          1. Download the appropriate binary for your platform
+          2. Place it in your MCP servers directory
+          3. Configure API keys in environment variables or config.json
+
+          ## Changes
+
+          See commit history for detailed changes.
+
+          ## Binary Sizes
+
+          \`\`\`
+          $(ls -lh release-files/agent-payment-router-* | awk '{print $9, "→", $5}')
+          \`\`\`
+
+          ---
+          🤖 Built with [Claude Code](https://claude.com/claude-code)
+          EOF
+
+      - name: Create release
+        uses: softprops/action-gh-release@v1
+        with:
+          tag_name: router-v${{ steps.version.outputs.version }}
+          name: Remote Router v${{ steps.version.outputs.version }}
+          body_path: release-notes.md
+          files: |
+            remote-router/release-files/*
+          draft: false
+          prerelease: false
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
