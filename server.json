@@ -1,12 +1,12 @@
 {
   "$schema": "https://static.modelcontextprotocol.io/schemas/2025-10-17/server.schema.json",
-  "name": "io.github.Abraxas1010/agent-payment-mcp",
+  "name": "io.github.Apoth3osis-ai/agent-payment-mcp",
   "description": "Secure USDC payments for AI agents on Base blockchain with budget controls and instant settlement.",
   "longDescription": "AgentPMT enables AI agents to securely make real-world payments using USDC stablecoin on Base blockchain. Our platform provides granular budget controls, instant settlement, and API/MCP integration for autonomous transactions. Perfect for businesses leveraging AI automation, we bridge the gap between artificial intelligence and the digital economy with enterprise-grade security and complete spending oversight.",
   "license": "MIT",
   "homepage": "https://agentpmt.com",
   "repository": {
-    "url": "https://github.com/Abraxas1010/agent-payment-mcp",
+    "url": "https://github.com/Apoth3osis-ai/agent-payment-mcp",
     "source": "github"
   },
   "version": "{{VERSION}}",
