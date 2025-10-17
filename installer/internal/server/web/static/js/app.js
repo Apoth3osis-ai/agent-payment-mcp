@@ -3,6 +3,11 @@ let selectedTools = [];
 
 // Load tools on page load
 window.addEventListener('DOMContentLoaded', async () => {
+    // Show Windows Defender warning for Windows users
+    if (navigator.platform.toLowerCase().includes('win')) {
+        document.getElementById('windows-defender-warning').style.display = 'block';
+    }
+
     try {
         const response = await fetch('/api/detect');
         tools = await response.json();
@@ -152,11 +157,6 @@ document.getElementById('install-btn').addEventListener('click', async () => {
                 document.getElementById('form-container').style.display = 'none';
                 document.getElementById('progress-section').style.display = 'none';
                 document.getElementById('success-box').style.display = 'block';
-
-                // Show Windows Defender warning on Windows
-                if (navigator.platform.toLowerCase().includes('win')) {
-                    document.getElementById('windows-defender-warning').style.display = 'block';
-                }
             }
         }
     } catch (err) {
