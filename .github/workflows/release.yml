@@ -10,9 +10,14 @@ jobs:
   build-go:
     name: Build Go Binaries
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          fetch-depth: 0
 
       - name: Setup Go
         uses: actions/setup-go@v5
@@ -87,11 +92,24 @@ jobs:
 
       - name: Commit updated binaries to repo
         run: |
+          # Configure git
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
+
+          # Checkout main branch (we're currently in detached HEAD at tag)
+          git fetch origin main
+          git checkout main
+
+          # Copy built binaries to correct locations
           git add installer/build/ installer/internal/installer/binaries/
-          git diff --staged --quiet || git commit -m "Update installer binaries for ${GITHUB_REF#refs/tags/}"
-          git push origin HEAD:main
+
+          # Commit if there are changes
+          if ! git diff --staged --quiet; then
+            git commit -m "Update installer binaries for ${GITHUB_REF#refs/tags/}"
+            git push origin main
+          else
+            echo "No changes to commit"
+          fi
 
       - name: Upload binaries
         uses: actions/upload-artifact@v4
