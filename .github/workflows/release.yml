@@ -58,36 +58,48 @@ jobs:
           cp ../distribution/binaries/darwin-arm64/agent-payment-server internal/installer/binaries/darwin-arm64
           cp ../distribution/binaries/linux-amd64/agent-payment-server internal/installer/binaries/linux-amd64
 
-          # Build installer for each platform
+          # Build installer for each platform - output to installer/build/
+          mkdir -p build
+
           # Windows
           GOOS=windows GOARCH=amd64 go build \
             -ldflags="-s -w" \
-            -o ../distribution/installers/agent-payment-installer-windows-amd64.exe \
+            -o build/agent-payment-installer-windows-amd64.exe \
             ./cmd/installer
 
           # macOS Intel
           GOOS=darwin GOARCH=amd64 go build \
             -ldflags="-s -w" \
-            -o ../distribution/installers/agent-payment-installer-macos-intel \
+            -o build/agent-payment-installer-macos-intel \
             ./cmd/installer
 
           # macOS Apple Silicon
           GOOS=darwin GOARCH=arm64 go build \
             -ldflags="-s -w" \
-            -o ../distribution/installers/agent-payment-installer-macos-arm64 \
+            -o build/agent-payment-installer-macos-arm64 \
             ./cmd/installer
 
           # Linux
           GOOS=linux GOARCH=amd64 go build \
             -ldflags="-s -w" \
-            -o ../distribution/installers/agent-payment-installer-linux-amd64 \
+            -o build/agent-payment-installer-linux-amd64 \
             ./cmd/installer
+
+      - name: Commit updated binaries to repo
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add installer/build/ installer/internal/installer/binaries/
+          git diff --staged --quiet || git commit -m "Update installer binaries for ${GITHUB_REF#refs/tags/}"
+          git push origin HEAD:main
 
       - name: Upload binaries
         uses: actions/upload-artifact@v4
         with:
           name: go-binaries
-          path: distribution/
+          path: |
+            distribution/
+            installer/build/
 
   release:
     name: Create Release
@@ -135,7 +147,7 @@ jobs:
         uses: softprops/action-gh-release@v1
         with:
           files: |
-            go-binaries/installers/*
+            go-binaries/installer/build/*
             release-binaries/*
           draft: false
           prerelease: false
@@ -144,7 +156,8 @@ jobs:
 
       - name: Install MCP Publisher
         run: |
-          curl -L https://github.com/modelcontextprotocol/mcp-publisher/releases/latest/download/mcp-publisher-linux-amd64 -o mcp-publisher
+          curl -L https://github.com/modelcontextprotocol/registry/releases/download/v1.3.2/mcp-publisher_linux_amd64.tar.gz -o mcp-publisher.tar.gz
+          tar -xzf mcp-publisher.tar.gz
           chmod +x mcp-publisher
           sudo mv mcp-publisher /usr/local/bin/
 
